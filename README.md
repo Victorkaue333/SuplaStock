@@ -238,6 +238,8 @@ SuplaStock/
 
 ### 📋 Pré-requisitos:
 
+Para rodar esse projeto é necessário:
+
 - Python 3.11 ou superior;
 - pip (gerenciador de pacotes Python);
 - Git;
