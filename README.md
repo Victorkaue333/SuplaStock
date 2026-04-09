@@ -50,7 +50,9 @@ Area de vendas é o coração do sistema, oferecendo uma experiência completa p
 - 💰 Pagamentos parciais e atualização automática de status;
 - 🧾 Emissão de nota fiscal simplificada em PDF;
 
-### 💵 Financeiro;.
+### 💵 Financeiro:
+
+O módulo financeiro é projetado para oferecer uma visão completa da saúde financeira do negócio, integrando dados de vendas, contas a receber e fluxo de caixa. As funcionalidades incluem:
 
 - 📈 Dashboard operacional e dashboard financeiro;
 - 💸 Fluxo de caixa (entradas × saídas);
