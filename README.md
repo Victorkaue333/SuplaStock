@@ -38,6 +38,8 @@ Abaixo estão listados os principais módulos e funcionalidades do sistema, deta
 
 ### 🛒 Vendas e Clientes:
 
+Area de vendas é o coração do sistema, oferecendo uma experiência completa para o processo de venda, desde a seleção de produtos até a finalização do pagamento e emissão de nota fiscal. As funcionalidades incluem:
+
 - 🛍️ Registro de vendas com carrinho de múltiplos itens;
 - 📦 Agrupamento por transação;
 - 👥 Gestão de clientes e tela de cobrança;
