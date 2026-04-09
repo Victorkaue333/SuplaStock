@@ -238,9 +238,9 @@ SuplaStock/
 
 ### 📋 Pré-requisitos:
 
-- Python 3.11 ou superior
-- pip (gerenciador de pacotes Python)
-- Git
+- Python 3.11 ou superior;
+- pip (gerenciador de pacotes Python);
+- Git;
 
 ### 🔧 Instalação:
 
