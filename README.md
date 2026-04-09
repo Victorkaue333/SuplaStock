@@ -31,6 +31,8 @@ Abaixo estão listados os principais módulos e funcionalidades do sistema, deta
 
 ### 📦 Estoque:
 
+O módulo de estoque é projetado para oferecer controle total sobre os produtos, desde o cadastro até a gestão de inventário. As funcionalidades incluem:
+
 - ➕ Cadastro, edição e exclusão de produtos;
 - 🏷️ Categoria, fornecedor, custo, preço sugerido e margem automática;
 - ⚠️ Controle de estoque mínimo, validade e produtos zerados;
