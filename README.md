@@ -62,37 +62,6 @@ Abaixo estão listados os principais módulos e funcionalidades do sistema, deta
 
 ---
 
-## 🛠️ Tecnologias:
-
-<div align="center">
-
-### Backend
-<img src="https://skillicons.dev/icons?i=python,django" alt="Python, Django" />
-
-**Python 3.11** | **Django 5.1** | **Django REST Framework**
-
-### Frontend
-<img src="https://skillicons.dev/icons?i=html,css,js,bootstrap" alt="HTML, CSS, JavaScript, Bootstrap" />
-
-**HTML5** | **CSS3** | **JavaScript ES6+** | **Bootstrap 5**
-
-### Banco de Dados
-<img src="https://skillicons.dev/icons?i=sqlite,postgres" alt="SQLite, PostgreSQL" />
-
-**SQLite** (desenvolvimento) | **PostgreSQL** (produção)
-
-### DevOps & Deploy
-<img src="https://skillicons.dev/icons?i=git,github,nginx" alt="Git, GitHub, Nginx" />
-<br/>
-<img src="https://img.shields.io/badge/Railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white" alt="Railway" />
-
-**Git/GitHub** | **Railway** | **Nginx** | **Gunicorn**
-
-</div>
-
-
----
-
 ## 📦 Stack Técnica Detalhada:
 
 O projeto utiliza uma combinação de tecnologias modernas e robustas para garantir desempenho, segurança e escalabilidade. Abaixo está a stack técnica detalhada:
