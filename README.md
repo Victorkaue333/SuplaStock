@@ -3,7 +3,7 @@
 # 💊 SuplaStock:
 
 
-### Sistema Web para Gestão Completa de Loja de Suplementos:
+## Sistema Web para Gestão Completa de Loja de Suplementos:
 
 Sistema web robusto desenvolvido para gestão de loja de suplementos, integrando estoque, vendas, clientes e financeiro em uma única aplicação Django. O sistema oferece funcionalidades avançadas como controle de estoque, emissão de notas fiscais, dashboards operacionais e financeiros, além de relatórios detalhados em PDF e Excel. Com uma interface intuitiva e responsiva, o SuplaStock é a solução ideal para otimizar a gestão e impulsionar o crescimento do seu negócio;
 
