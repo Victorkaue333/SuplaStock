@@ -264,7 +264,7 @@ copy .env.example .env
 **Linux/macOS:**
 
 ```bash
-cp
+cp .env.example .env
 ```
 
 **5. Execute as migrações e cargas iniciais:**
