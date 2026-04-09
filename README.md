@@ -261,7 +261,7 @@ cp
 **5. Execute as migrações e cargas iniciais:**
 
 ```bash
-cd va_suplementos
+cd SuplaStock
 python manage.py migrate
 python manage.py ensure_default_categories
 ```
