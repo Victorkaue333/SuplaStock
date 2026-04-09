@@ -228,7 +228,7 @@ Para rodar esse projeto é necessário:
 
 ```bash
 git clone
-cd
+cd SuplaStock
 ```
 
 **2. Crie e ative um ambiente virtual:**
