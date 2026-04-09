@@ -62,6 +62,8 @@ O módulo financeiro é projetado para oferecer uma visão completa da saúde fi
 
 ### 📑 Relatórios e Exportações:
 
+Os relatórios são essenciais para análise e tomada de decisões estratégicas. O sistema oferece uma variedade de relatórios detalhados, exportáveis em PDF e Excel, para facilitar a visualização e compartilhamento de informações. As funcionalidades incluem:
+
 - 📄 Vendas em PDF e Excel;
 - 📦 Estoque em PDF;
 - 🏆 Ranking de clientes em Excel;
