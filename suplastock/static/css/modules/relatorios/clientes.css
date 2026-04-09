@@ -1,0 +1,255 @@
+﻿/* ==================================== */
+        /* ESTILOS ESPECÍFICOS DA HOME PAGE     */
+        /* ==================================== */
+        
+        /* Page Header */
+        .page-header {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px;
+            text-align: center;
+            margin-bottom: 60px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .page-title {
+            font-size: clamp(32px, 6vw, 48px);
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 0;
+        }
+
+        .page-subtitle {
+            font-size: clamp(14px, 2.5vw, 16px);
+            color: #64748b;
+            font-weight: 400;
+            margin-bottom: 0;
+            display: block;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 32px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 32px;
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            border: 2px solid transparent;
+            min-height: 220px;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(79, 70, 229, 0.15);
+            border-color: #E0E7FF;
+            text-decoration: none;
+        }
+
+        .card-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            font-size: 36px;
+            transition: transform 0.3s ease;
+        }
+
+        .dashboard-card:hover .card-icon-wrapper {
+            transform: scale(1.1);
+        }
+
+        .card-icon-blue {
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            color: white;
+        }
+
+        .card-icon-purple {
+            background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+            color: white;
+        }
+
+        .card-icon-cyan {
+            background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+            color: white;
+        }
+
+        .card-icon-green {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            color: white;
+        }
+
+        .card-icon-orange {
+            background: linear-gradient(135deg, #F97316 0%, #EA580C 100%);
+            color: white;
+        }
+
+        .card-icon-red {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+            color: white;
+        }
+
+        .card-icon-teal {
+            background: linear-gradient(135deg, #14B8A6 0%, #0D9488 100%);
+            color: white;
+        }
+
+        .card-icon-indigo {
+            background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+            color: white;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0;
+        }
+
+        /* Responsivo */
+        
+        /* Telas Grandes */
+        @media (max-width: 1200px) {
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 28px;
+            }
+        }
+        
+        /* Tablets */
+        @media (max-width: 1024px) {
+            .page-header {
+                margin-bottom: 50px;
+            }
+            
+            .cards-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
+            }
+            
+            .dashboard-card {
+                padding: 32px 24px;
+                min-height: 200px;
+            }
+            
+            .card-icon-wrapper {
+                width: 70px;
+                height: 70px;
+                font-size: 32px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                margin-bottom: 40px;
+            }
+            
+            .page-title {
+                font-size: 32px !important;
+                margin-bottom: 12px;
+            }
+            
+            .page-subtitle {
+                font-size: 14px !important;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                max-width: 100%;
+            }
+            
+            .dashboard-card {
+                padding: 28px 24px;
+                min-height: 180px;
+            }
+            
+            .card-icon-wrapper {
+                width: 64px;
+                height: 64px;
+                font-size: 28px;
+                margin-bottom: 20px;
+            }
+            
+            .card-title {
+                font-size: 17px;
+            }
+        }
+        
+        /* Smartphones */
+        @media (max-width: 576px) {
+            .page-header {
+                margin-bottom: 32px;
+            }
+            
+            .page-title {
+                font-size: 28px !important;
+                margin-bottom: 10px;
+            }
+            
+            .page-subtitle {
+                font-size: 13px !important;
+            }
+            
+            .cards-grid {
+                gap: 16px;
+            }
+            
+            .dashboard-card {
+                padding: 24px 20px;
+                min-height: 160px;
+            }
+            
+            .card-icon-wrapper {
+                width: 56px;
+                height: 56px;
+                font-size: 24px;
+                margin-bottom: 16px;
+            }
+            
+            .card-title {
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .page-title {
+                font-size: 24px !important;
+            }
+            
+            .dashboard-card {
+                padding: 20px;
+                min-height: 150px;
+            }
+            
+            .card-icon-wrapper {
+                width: 52px;
+                height: 52px;
+                font-size: 22px;
+            }
+            
+            .card-title {
+                font-size: 15px;
+            }
+        }
+

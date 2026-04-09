@@ -1,0 +1,127 @@
+﻿<div class="mobile-header">
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menu">
+        <i class="fas fa-bars"></i>
+    </button>
+    <a href="{% url 'home' %}" class="mobile-logo" aria-label="Ir para o início">
+        <div class="mobile-logo-icon"><i class="fas fa-leaf"></i></div>
+        <span>SuplaStock</span>
+    </a>
+    <div class="mobile-header-spacer" aria-hidden="true"></div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+<aside class="sidebar" id="sidebar" role="navigation" aria-label="Menu principal">
+    <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Fechar menu">
+        <i class="fas fa-times"></i>
+    </button>
+
+    <div class="logo">
+        <div class="logo-icon"><i class="fas fa-leaf"></i></div>
+        <div>
+            <div class="logo-text">SuplaStock</div>
+            <div class="logo-subtitle">Gestão inteligente de suplementos</div>
+        </div>
+    </div>
+
+    {% with ns=request.resolver_match.namespace name=request.resolver_match.url_name %}
+    <ul class="nav-menu">
+        <li class="nav-section-title">Visão Geral</li>
+        <li class="nav-item">
+            <a href="{% url 'home' %}" class="nav-link-custom {% if name == 'home' %}active{% endif %}">
+                <i class="fas fa-grid-2"></i>
+                <span>Painel</span>
+            </a>
+        </li>
+
+        {% if request.user.is_authenticated %}
+            {% if request.user.is_vendedor or request.user.has_full_operational_access %}
+            <li class="nav-item">
+                <a href="{% url 'financeiro:alertas_notificacoes' %}" class="nav-link-custom {% if ns == 'financeiro' and name == 'alertas_notificacoes' %}active{% endif %}">
+                    <i class="fas fa-bell"></i>
+                    <span>Alertas</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_estoquista or request.user.is_vendedor or request.user.has_full_operational_access %}
+            <li class="nav-section-title">Operação</li>
+            {% endif %}
+
+            {% if request.user.is_vendedor or request.user.has_full_operational_access %}
+            <li class="nav-item">
+                <a href="{% url 'vendas:gestao_vendas' %}" class="nav-link-custom {% if ns == 'vendas' and name == 'gestao_vendas' %}active{% endif %}">
+                    <i class="fas fa-cart-shopping"></i>
+                    <span>Vendas</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_estoquista or request.user.is_vendedor or request.user.has_full_operational_access %}
+            <li class="nav-item">
+                <a href="{% url 'estoque:gestao_produtos' %}" class="nav-link-custom {% if ns == 'estoque' and name == 'gestao_produtos' %}active{% endif %}">
+                    <i class="fas fa-box-open"></i>
+                    <span>Estoque</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_vendedor or request.user.has_full_operational_access %}
+            <li class="nav-section-title">Financeiro</li>
+            <li class="nav-item">
+                <a href="{% url 'financeiro:contas_receber' %}" class="nav-link-custom {% if ns == 'financeiro' and name == 'contas_receber' %}active{% endif %}">
+                    <i class="fas fa-wallet"></i>
+                    <span>Contas a Receber</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'financeiro:inadimplencia' %}" class="nav-link-custom {% if ns == 'financeiro' and name == 'inadimplencia' %}active{% endif %}">
+                    <i class="fas fa-user-clock"></i>
+                    <span>Inadimplência</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user.has_full_operational_access %}
+            <li class="nav-item nav-item-standalone">
+                <a href="{% url 'financeiro:dashboard_financeiro' %}" class="nav-link-custom {% if ns == 'financeiro' and name == 'dashboard_financeiro' %}active{% endif %}">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard Financeiro</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'financeiro:dashboard' %}" class="nav-link-custom {% if ns == 'financeiro' and name == 'dashboard' %}active{% endif %}">
+                    <i class="fas fa-chart-column"></i>
+                    <span>Resumo Operacional</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'financeiro:relatorios_gerenciais' %}" class="nav-link-custom {% if ns == 'financeiro' and name == 'relatorios_gerenciais' %}active{% endif %}">
+                    <i class="fas fa-chart-pie"></i>
+                    <span>Relatórios</span>
+                </a>
+            </li>
+            {% endif %}
+
+            {% if request.user.is_developer %}
+            <li class="nav-section-title">Administração</li>
+            <li class="nav-item">
+                <a href="{% url 'usuarios:auditoria' %}" class="nav-link-custom {% if ns == 'usuarios' and name == 'auditoria' %}active{% endif %}">
+                    <i class="fas fa-shield-halved"></i>
+                    <span>Auditoria</span>
+                </a>
+            </li>
+            {% endif %}
+        {% endif %}
+    </ul>
+    {% endwith %}
+
+    {% if request.user.is_authenticated %}
+    <div class="logout-link">
+        <a href="{% url 'usuarios:logout' %}" class="nav-link-custom">
+            <i class="fas fa-right-from-bracket"></i>
+            <span>Sair</span>
+        </a>
+    </div>
+    {% endif %}
+</aside>

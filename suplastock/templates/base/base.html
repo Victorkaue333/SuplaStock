@@ -1,0 +1,86 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SuplaStock{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}?v=20260409-01">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}?v=20260409-01">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}?v=20260409-01">
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}?v=20260409-01">
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
+        crossorigin="anonymous">
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/base/tokens.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base/reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base/typography.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base/utilities.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base/layout.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base/browser-fixes.css' %}">
+    <link rel="stylesheet" href="{% static 'css/base/bootstrap-overrides.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/filters.css' %}?v=20260324-01">
+    <link rel="stylesheet" href="{% static 'css/components/toasts.css' %}?v=20260323-2">
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% include 'base/navbar.html' %}
+
+    <div class="page-wrapper">
+        <main class="main-content">
+            {% if messages %}
+                <div id="django-messages" hidden>
+                    {% for message in messages %}
+                        <div class="django-message" data-level="{{ message.tags|default:'info' }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    {% include 'base/footer.html' %}
+
+    <div id="app-toast-container" class="app-toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <div class="modal fade" id="appConfirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content app-confirm-modal-content">
+                <div class="modal-header app-confirm-modal-header">
+                    <h5 class="modal-title" id="appConfirmModalTitle">Confirmar ação</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="app-confirm-modal-message" id="appConfirmModalMessage">Deseja continuar?</p>
+                </div>
+                <div class="modal-footer app-confirm-modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" id="appConfirmCancelButton">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="appConfirmAcceptButton">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/vendor/chart.umd.min.js' %}"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+        crossorigin="anonymous"></script>
+    <script src="{% static 'js/base/toast.js' %}" defer></script>
+    <script src="{% static 'js/base/app-shell.js' %}" defer></script>
+    <script src="{% static 'js/components/filters.js' %}?v=20260324-01" defer></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

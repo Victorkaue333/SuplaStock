@@ -1,0 +1,159 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Nova Conta a Receber - SuplaStock{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/financeiro/nova-conta-receber.css' %}">
+{% endblock %}
+
+{% block content %}
+<div style="padding: 32px;">
+    
+    <!-- Breadcrumb -->
+    <nav style="margin-bottom: 24px;">
+        <ol style="list-style: none; padding: 0; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #64748b;">
+            <li><a href="{% url 'home' %}" style="color: #667eea; text-decoration: none;"><i class="fas fa-home"></i> Início</a></li>
+            <li><i class="fas fa-chevron-right" style="font-size: 10px;"></i></li>
+            <li><a href="{% url 'financeiro:contas_receber' %}" style="color: #667eea; text-decoration: none;">Contas a Receber</a></li>
+            <li><i class="fas fa-chevron-right" style="font-size: 10px;"></i></li>
+            <li style="color: #1e293b; font-weight: 600;">Nova Conta</li>
+        </ol>
+    </nav>
+
+    <div class="form-container">
+        
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 40px;">
+            <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);">
+                <i class="fas fa-file-invoice-dollar" style="font-size: 36px; color: white;"></i>
+            </div>
+            <h1 style="font-size: 32px; font-weight: 800; color: #1e293b; margin-bottom: 8px;">Nova Conta a Receber</h1>
+            <p style="color: #64748b; font-size: 15px;">Cadastre uma nova conta e mantenha controle financeiro</p>
+        </div>
+
+        <!-- Informação -->
+        <div class="info-box">
+            <div style="display: flex; align-items: start;">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                    <p style="font-weight: 700; margin-bottom: 6px;">Dica Importante</p>
+                    <p>Preencha todos os campos obrigatórios (*). Você pode vincular esta conta a uma venda existente ou criar uma conta avulsa.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulário -->
+        <form method="POST" action="{% url 'financeiro:nova_conta_receber' %}">
+            {% csrf_token %}
+
+            <!-- Seção 1: Informações Básicas -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-user-tie"></i>
+                    Informações do Cliente
+                </div>
+
+                <div class="grid-2-cols">
+                    <div>
+                        <label class="form-label required">
+                            <i class="fas fa-user"></i> Cliente
+                        </label>
+                        <select name="cliente" class="form-select" required>
+                            <option value="">Selecione um cliente...</option>
+                            {% for cliente in clientes %}
+                            <option value="{{ cliente.id }}">
+                                {{ cliente.nome }}{% if cliente.codigo %} ({{ cliente.codigo }}){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="form-label">
+                            <i class="fas fa-shopping-cart"></i> Venda Relacionada (Opcional)
+                        </label>
+                        <select name="venda" class="form-select">
+                            <option value="">Nenhuma venda vinculada</option>
+                            {% for venda in vendas %}
+                            <option value="{{ venda.id }}">
+                                Venda #{{ venda.id }} - R$ {{ venda.preco_total|floatformat:2 }} ({{ venda.data_venda|date:"d/m/Y" }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção 2: Detalhes da Conta -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-file-alt"></i>
+                    Detalhes da Conta
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <label class="form-label required">
+                        <i class="fas fa-align-left"></i> Descrição
+                    </label>
+                    <input type="text" name="descricao" class="form-control" placeholder="Ex: Venda de Whey Protein 1kg" required maxlength="255">
+                </div>
+
+                <div class="grid-2-cols">
+                    <div>
+                        <label class="form-label required">
+                            <i class="fas fa-dollar-sign"></i> Valor
+                        </label>
+                        <input type="number" name="valor" class="form-control" placeholder="0,00" step="0.01" min="0.01" required>
+                    </div>
+
+                    <div>
+                        <label class="form-label required">
+                            <i class="fas fa-calendar-alt"></i> Data de Vencimento
+                        </label>
+                        <input type="date" name="data_vencimento" class="form-control" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção 3: Observações -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-sticky-note"></i>
+                    Observações Adicionais
+                </div>
+
+                <div>
+                    <label class="form-label">
+                        <i class="fas fa-comment"></i> Observações
+                    </label>
+                    <textarea name="observacoes" class="form-control" rows="4" placeholder="Digite observações ou informações complementares sobre esta conta..."></textarea>
+                    <small style="display: block; margin-top: 8px; color: #64748b; font-size: 13px;">
+                        <i class="fas fa-info-circle"></i> Informações que possam ajudar no acompanhamento do recebimento
+                    </small>
+                </div>
+            </div>
+
+            <!-- Botões -->
+            <div style="display: flex; gap: 16px; justify-content: flex-end; padding-top: 24px; border-top: 2px solid #f1f5f9;">
+                <a href="{% url 'financeiro:contas_receber' %}" class="btn-cancel">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-check"></i>
+                    Cadastrar Conta
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/modules/financeiro/nova-conta-receber.js' %}" defer></script>
+{% endblock %}
+

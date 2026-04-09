@@ -1,0 +1,116 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+{% load financeiro_extras %}
+
+{% block title %}Resumo Operacional | SuplaStock{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/financeiro/resumo-operacional.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="resumo-title">
+            <i class="fas fa-chart-bar"></i>
+            Resumo Operacional
+        </h1>
+        <p class="page-subtitle">
+            Visão consolidada de estoque, vendas e finanças em tempo real.
+        </p>
+    </div>
+    <div class="page-actions-bar">
+        <div class="summary-meta-panel">
+            <div class="summary-last-update">
+                <span class="summary-last-update-icon" aria-hidden="true"><i class="fas fa-clock"></i></span>
+                <span>Atualizado em {{ ultima_atualizacao|date:"d/m/Y H:i:s" }}</span>
+            </div>
+            <div class="summary-export-actions" role="group" aria-label="Exportar resumo operacional">
+                <a href="{% url 'financeiro:exportar_resumo_operacional' %}?formato=pdf" class="summary-export-btn summary-export-btn-pdf"><i class="fas fa-file-pdf"></i><span>PDF</span></a>
+                <a href="{% url 'financeiro:exportar_resumo_operacional' %}?formato=excel" class="summary-export-btn summary-export-btn-excel"><i class="fas fa-file-excel"></i><span>Excel</span></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stats-section">
+    <div class="stat-card-compact green">
+        <div class="stat-icon-compact green"><i class="fas fa-dollar-sign"></i></div>
+        <div class="stat-content"><div class="stat-label">Faturamento do Mês</div><div class="stat-value-compact">{{ faturamento_mes|currency_br }}</div></div>
+    </div>
+    <div class="stat-card-compact blue">
+        <div class="stat-icon-compact blue"><i class="fas fa-chart-line"></i></div>
+        <div class="stat-content"><div class="stat-label">Lucro Líquido</div><div class="stat-value-compact">{{ lucro_mes|currency_br }}</div></div>
+    </div>
+    <div class="stat-card-compact orange">
+        <div class="stat-icon-compact orange"><i class="fas fa-wallet"></i></div>
+        <div class="stat-content"><div class="stat-label">Recebimentos Hoje</div><div class="stat-value-compact">{{ recebimentos_hoje|currency_br }}</div></div>
+    </div>
+    <div class="stat-card-compact dark">
+        <div class="stat-icon-compact dark"><i class="fas fa-boxes-stacked"></i></div>
+        <div class="stat-content"><div class="stat-label">Produtos Cadastrados</div><div class="stat-value-compact">{{ produtos_cadastrados }}</div></div>
+    </div>
+</div>
+
+<div class="quick-actions">
+    <a href="{% url 'vendas:gestao_vendas' %}" class="quick-action-card"><i class="fas fa-cart-shopping"></i><span>Nova Venda</span></a>
+    <a href="{% url 'estoque:gestao_produtos' %}" class="quick-action-card"><i class="fas fa-box-open"></i><span>Atualizar Estoque</span></a>
+    <a href="{% url 'financeiro:contas_receber' %}" class="quick-action-card"><i class="fas fa-file-invoice-dollar"></i><span>Contas a Receber</span></a>
+    <a href="{% url 'financeiro:dashboard_financeiro' %}" class="quick-action-card"><i class="fas fa-chart-pie"></i><span>Analytics Financeiro</span></a>
+</div>
+
+<div class="bottom-section">
+    <div class="info-card">
+        <h3 class="info-card-title"><i class="fas fa-shopping-cart"></i>Vendas Recentes</h3>
+        <div class="info-card-content">
+            {% if vendas_recentes %}
+                {% for venda in vendas_recentes %}
+                <div class="recent-item">
+                    <div class="recent-info">
+                        <div class="recent-name">{{ venda.produto.nome }}</div>
+                        <div class="recent-date">{{ venda.data_venda|date:"d/m/Y" }}</div>
+                    </div>
+                    <div class="recent-value">{{ venda.valor_total|currency_br }}</div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state"><i class="fas fa-shopping-cart"></i><p>Nenhuma venda registrada no período.</p></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="info-card">
+        <h3 class="info-card-title"><i class="fas fa-bolt"></i>Status Financeiro</h3>
+        <div class="info-card-content status-summary">
+            <div class="status-chip"><span>Contas em aberto</span><strong>{{ contas_em_aberto }}</strong></div>
+            <div class="status-chip warning"><span>Contas atrasadas</span><strong>{{ contas_atrasadas }}</strong></div>
+            {% if produto_mais_vendido %}
+            <div class="highlight-product compact">
+                <i class="fas fa-trophy"></i>
+                <div>
+                    <div class="highlight-name">{{ produto_mais_vendido.produto__nome }}</div>
+                    <div class="highlight-qty">{{ produto_mais_vendido.total_vendido }} unidades vendidas</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="info-card alert-card">
+        <h3 class="info-card-title"><i class="fas fa-exclamation-triangle"></i>Alerta de Estoque</h3>
+        <div class="info-card-content">
+            {% if produtos_estoque_baixo %}
+                {% for produto in produtos_estoque_baixo|slice:":6" %}
+                <div class="alert-item"><div class="alert-name">{{ produto.nome }}</div><div class="alert-qty">{{ produto.estoque_atual }} unid.</div></div>
+                {% endfor %}
+            {% else %}
+                <div class="success-state"><i class="fas fa-check-circle"></i><p>Todos os produtos com estoque adequado.</p></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/modules/financeiro/resumo-operacional.js' %}" defer></script>
+{% endblock %}

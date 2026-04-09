@@ -1,0 +1,10 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SuplaStock">
+  <rect width="64" height="64" rx="14" fill="#DC2626"/>
+  <rect x="22" y="29" width="20" height="6" rx="3" fill="#FFFFFF"/>
+  <rect x="14" y="24" width="6" height="16" rx="2" fill="#FFFFFF"/>
+  <rect x="44" y="24" width="6" height="16" rx="2" fill="#FFFFFF"/>
+  <rect x="10" y="27" width="3" height="10" rx="1.5" fill="#FFFFFF" opacity="0.92"/>
+  <rect x="51" y="27" width="3" height="10" rx="1.5" fill="#FFFFFF" opacity="0.92"/>
+</svg>
+
+

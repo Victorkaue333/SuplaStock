@@ -1,0 +1,693 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Auditoria e UsuÃ¡rios - SuplaStock{% endblock %}
+{% block nav_auditoria %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/usuarios/auditoria.css' %}?v=20260324-03">
+{% endblock %}
+
+{% block content %}
+<div class="auditoria-page">
+    <section class="auditoria-hero">
+        <div class="auditoria-hero__left">
+            <span class="auditoria-hero__badge"><i class="fas fa-shield-halved"></i> Controle restrito</span>
+            <h1>Painel de Auditoria e AdministraÃ§Ã£o</h1>
+            <p>Gerencie contas, perfis de acesso, sessÃµes e trilhas de seguranÃ§a em uma Ãºnica tela.</p>
+        </div>
+        <div class="auditoria-hero__actions">
+            <button type="button" class="btn btn-success btn-lg shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNovoUsuario">
+                <i class="fas fa-user-plus me-2"></i>Novo UsuÃ¡rio
+            </button>
+        </div>
+    </section>
+
+    {% if senha_temporaria %}
+    <div class="alert alert-warning auditoria-alert" role="alert">
+        <div class="auditoria-alert__title"><i class="fas fa-key me-2"></i>Senha provisÃ³ria gerada</div>
+        <div class="small mb-2">{{ senha_temporaria.usuario_nome }} ({{ senha_temporaria.usuario_username }})</div>
+        <code>{{ senha_temporaria.senha_temporaria }}</code>
+    </div>
+    {% endif %}
+
+    <section class="auditoria-kpis">
+        <article class="auditoria-kpi auditoria-kpi--users">
+            <div class="auditoria-kpi__icon"><i class="fas fa-users"></i></div>
+            <div>
+                <span>Total de UsuÃ¡rios</span>
+                <strong>{{ total_usuarios }}</strong>
+                <small>{{ total_usuarios_ativos }} ativos</small>
+            </div>
+        </article>
+        <article class="auditoria-kpi auditoria-kpi--admin">
+            <div class="auditoria-kpi__icon"><i class="fas fa-user-shield"></i></div>
+            <div>
+                <span>Administradores</span>
+                <strong>{{ total_admins }}</strong>
+                <small>OperaÃ§Ã£o completa</small>
+            </div>
+        </article>
+        <article class="auditoria-kpi auditoria-kpi--seller">
+            <div class="auditoria-kpi__icon"><i class="fas fa-cash-register"></i></div>
+            <div>
+                <span>Vendedores</span>
+                <strong>{{ total_vendedores }}</strong>
+                <small>Acesso operacional limitado</small>
+            </div>
+        </article>
+        <article class="auditoria-kpi auditoria-kpi--dev">
+            <div class="auditoria-kpi__icon"><i class="fas fa-user-gear"></i></div>
+            <div>
+                <span>Developers</span>
+                <strong>{{ total_developers }}</strong>
+                <small>Auditoria e seguranÃ§a</small>
+            </div>
+        </article>
+        <article class="auditoria-kpi auditoria-kpi--sessions">
+            <div class="auditoria-kpi__icon"><i class="fas fa-user-clock"></i></div>
+            <div>
+                <span>SessÃµes Ativas</span>
+                <strong>{{ sessoes_ativas|length }}</strong>
+                <small>Monitoramento em tempo real</small>
+            </div>
+        </article>
+    </section>
+
+    <section class="auditoria-card">
+        <header class="auditoria-card__header">
+            <div>
+                <h2><i class="fas fa-users-cog me-2"></i>AdministraÃ§Ã£o de UsuÃ¡rios</h2>
+                <p>{{ usuarios_filtrados_count }} usuÃ¡rio(s) exibido(s)</p>
+            </div>
+        </header>
+
+        <form method="get"
+              class="auditoria-filters app-filter-form"
+              data-filter-form
+              data-auto-submit="true"
+              data-filter-debounce="380">
+            <div class="auditoria-filters__group app-filter-field">
+                <label for="audit-search" class="app-filter-label">Busca</label>
+                <input id="audit-search" type="text" name="q" value="{{ filtro_busca }}" placeholder="Nome, username ou e-mail..." class="app-filter-control">
+            </div>
+            <div class="auditoria-filters__group app-filter-field">
+                <label for="audit-role" class="app-filter-label">Perfil</label>
+                <select id="audit-role" name="nivel" class="app-filter-control">
+                    <option value="">Todos</option>
+                    {% for role_key, role_label in role_choices %}
+                    <option value="{{ role_key }}" {% if filtro_nivel == role_key %}selected{% endif %}>{{ role_label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="auditoria-filters__group app-filter-field">
+                <label for="audit-status" class="app-filter-label">Status</label>
+                <select id="audit-status" name="status" class="app-filter-control">
+                    <option value="">Todos</option>
+                    <option value="ativo" {% if filtro_status == 'ativo' %}selected{% endif %}>Ativo</option>
+                    <option value="inativo" {% if filtro_status == 'inativo' %}selected{% endif %}>Inativo</option>
+                </select>
+            </div>
+            <div class="auditoria-filters__actions">
+                <a href="{% url 'usuarios:auditoria' %}" class="btn-action app-filter-btn app-filter-btn-clear app-filter-btn-clear--text" aria-label="Limpar filtros" title="Limpar filtros">
+                    <i class="fas fa-rotate"></i>
+                    Limpar
+                </a>
+            </div>
+        </form>
+
+        <div class="table-responsive auditoria-table-wrap">
+            <table class="table auditoria-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>UsuÃ¡rio</th>
+                        <th>Perfil</th>
+                        <th>Status</th>
+                        <th>Eventos</th>
+                        <th>Ãšltimo evento</th>
+                        <th class="text-end">AÃ§Ãµes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>
+                            <div class="auditoria-user">
+                                <div class="auditoria-user__avatar">{{ usuario.get_full_name|default:usuario.username|slice:":1"|upper }}</div>
+                                <div>
+                                    <strong>{{ usuario.get_full_name|default:usuario.username }}</strong>
+                                    <small>@{{ usuario.username }} â€¢ {{ usuario.email|default:"sem e-mail" }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="auditoria-badge auditoria-badge--role auditoria-badge--{{ usuario.nivel_acesso }}">
+                                {{ usuario.get_nivel_acesso_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if usuario.ativo %}
+                            <span class="auditoria-badge auditoria-badge--status auditoria-badge--active">Ativo</span>
+                            {% else %}
+                            <span class="auditoria-badge auditoria-badge--status auditoria-badge--inactive">Inativo</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ usuario.total_eventos }}</td>
+                        <td>
+                            {% if usuario.ultimo_evento %}
+                                {{ usuario.ultimo_evento|date:"d/m/Y H:i" }}
+                            {% else %}
+                                <span class="text-muted">Sem registros</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="auditoria-actions">
+                                {% if usuario.nivel_acesso == 'developer' and not can_manage_developer and usuario.id != request.user.id %}
+                                <span class="text-muted small">Conta developer protegida</span>
+                                {% else %}
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-primary auditoria-action-icon-btn"
+                                    title="Editar usuÃ¡rio"
+                                    aria-label="Editar usuÃ¡rio"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalEditarUsuario"
+                                    data-update-url="{% url 'usuarios:auditoria_atualizar_usuario' usuario.id %}"
+                                    data-usuario-id="{{ usuario.id }}"
+                                    data-usuario-nome="{{ usuario.get_full_name|default:usuario.username }}"
+                                    data-usuario-username="{{ usuario.username }}"
+                                    data-usuario-email="{{ usuario.email }}"
+                                    data-usuario-nivel="{{ usuario.nivel_acesso }}"
+                                    data-usuario-ativo="{% if usuario.ativo %}1{% else %}0{% endif %}">
+                                    <i class="fas fa-pen"></i>
+                                </button>
+                                {% if usuario.id != request.user.id %}
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger auditoria-action-icon-btn"
+                                    title="Resetar senha"
+                                    aria-label="Resetar senha"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalResetSenha"
+                                    data-reset-url="{% url 'usuarios:auditoria_resetar_senha_usuario' usuario.id %}"
+                                    data-usuario-id="{{ usuario.id }}"
+                                    data-usuario-nome="{{ usuario.get_full_name|default:usuario.username }}"
+                                    data-usuario-username="{{ usuario.username }}">
+                                    <i class="fas fa-key"></i>
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger auditoria-action-icon-btn"
+                                    title="Excluir usuÃ¡rio"
+                                    aria-label="Excluir usuÃ¡rio"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalDeletarUsuario"
+                                    data-delete-url="{% url 'usuarios:auditoria_deletar_usuario' usuario.id %}"
+                                    data-usuario-id="{{ usuario.id }}"
+                                    data-usuario-nome="{{ usuario.get_full_name|default:usuario.username }}"
+                                    data-usuario-username="{{ usuario.username }}"
+                                    data-usuario-nivel="{{ usuario.get_nivel_acesso_display }}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                                {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">Nenhum usuÃ¡rio encontrado para os filtros informados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="auditoria-grid">
+        <article class="auditoria-card">
+            <header class="auditoria-card__header">
+                <div>
+                    <h2><i class="fas fa-user-clock me-2"></i>SessÃµes Ativas</h2>
+                    <p>Controle de sessÃµes autenticadas no sistema</p>
+                </div>
+            </header>
+            <div class="table-responsive auditoria-table-wrap">
+                <table class="table auditoria-table auditoria-table--compact mb-0">
+                    <thead>
+                        <tr>
+                            <th>UsuÃ¡rio</th>
+                            <th>Perfil</th>
+                            <th>Expira em</th>
+                            <th>SessÃ£o</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sessao in sessoes_ativas %}
+                        <tr class="{% if sessao.is_current %}auditoria-row--current{% endif %}">
+                            <td>{{ sessao.nome }}</td>
+                            <td>{{ sessao.nivel_acesso }}</td>
+                            <td>{{ sessao.expira_em }}</td>
+                            <td>
+                                <code>{{ sessao.session_key_short }}</code>
+                                {% if sessao.is_current %}
+                                <span class="auditoria-badge auditoria-badge--status auditoria-badge--active">Atual</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">Nenhuma sessÃ£o ativa.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if sessoes_page_obj.paginator.num_pages > 1 %}
+            <nav class="auditoria-pagination-wrap" aria-label="PaginaÃ§Ã£o de sessÃµes ativas">
+                <ul class="pagination pagination-sm mb-0">
+                    {% if sessoes_page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if auditoria_filters_query %}{{ auditoria_filters_query }}&{% endif %}sessoes_page={{ sessoes_page_obj.previous_page_number }}&tab={{ active_logs_tab }}">Anterior</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                    {% endif %}
+
+                    {% for page_num in sessoes_page_obj.paginator.page_range %}
+                    {% if page_num >= sessoes_page_obj.number|add:'-2' and page_num <= sessoes_page_obj.number|add:'2' %}
+                    <li class="page-item {% if page_num == sessoes_page_obj.number %}active{% endif %}">
+                        <a class="page-link" href="?{% if auditoria_filters_query %}{{ auditoria_filters_query }}&{% endif %}sessoes_page={{ page_num }}&tab={{ active_logs_tab }}">{{ page_num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if sessoes_page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if auditoria_filters_query %}{{ auditoria_filters_query }}&{% endif %}sessoes_page={{ sessoes_page_obj.next_page_number }}&tab={{ active_logs_tab }}">PrÃ³xima</a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">PrÃ³xima</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </article>
+
+        <article class="auditoria-card">
+            <header class="auditoria-card__header">
+                <div>
+                    <h2><i class="fas fa-list-check me-2"></i>Logs de Acesso e AÃ§Ãµes</h2>
+                    <p>Rastreamento de autenticaÃ§Ã£o e operaÃ§Ãµes administrativas</p>
+                </div>
+            </header>
+            <div class="auditoria-tabs">
+                <ul class="nav nav-pills mb-3" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if active_logs_tab == 'acessos' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#tabAcesso" type="button" role="tab">Acessos</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {% if active_logs_tab == 'acoes' %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#tabAcoes" type="button" role="tab">AÃ§Ãµes</button>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade {% if active_logs_tab == 'acessos' %}show active{% endif %}" id="tabAcesso" role="tabpanel">
+                        <div class="table-responsive auditoria-table-wrap">
+                            <table class="table auditoria-table auditoria-table--compact mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Data/Hora</th>
+                                        <th>UsuÃ¡rio</th>
+                                        <th>AÃ§Ã£o</th>
+                                        <th>IP</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in acessos_recentes %}
+                                    <tr>
+                                        <td>{{ item.data_hora|date:"d/m/Y H:i:s" }}</td>
+                                        <td>{{ item.usuario.username }}</td>
+                                        <td>{{ item.get_tipo_acao_display }}</td>
+                                        <td>{{ item.ip_address|default:"-" }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="4" class="text-center text-muted py-3">Sem registros recentes.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if acessos_page_obj.paginator.num_pages > 1 %}
+                        <nav class="auditoria-pagination-wrap" aria-label="PaginaÃ§Ã£o de acessos">
+                            <ul class="pagination pagination-sm mb-0">
+                                {% if acessos_page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if auditoria_filters_query %}{{ auditoria_filters_query }}&{% endif %}acessos_page={{ acessos_page_obj.previous_page_number }}&tab=acessos">Anterior</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                                {% endif %}
+
+                                {% for page_num in acessos_page_obj.paginator.page_range %}
+                                {% if page_num >= acessos_page_obj.number|add:'-2' and page_num <= acessos_page_obj.number|add:'2' %}
+                                <li class="page-item {% if page_num == acessos_page_obj.number %}active{% endif %}">
+                                    <a class="page-link" href="?{% if auditoria_filters_query %}{{ auditoria_filters_query }}&{% endif %}acessos_page={{ page_num }}&tab=acessos">{{ page_num }}</a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+
+                                {% if acessos_page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if auditoria_filters_query %}{{ auditoria_filters_query }}&{% endif %}acessos_page={{ acessos_page_obj.next_page_number }}&tab=acessos">PrÃ³xima</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link">PrÃ³xima</span></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade {% if active_logs_tab == 'acoes' %}show active{% endif %}" id="tabAcoes" role="tabpanel">
+                        <div class="table-responsive auditoria-table-wrap">
+                            <table class="table auditoria-table auditoria-table--compact mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Data/Hora</th>
+                                        <th>UsuÃ¡rio</th>
+                                        <th>DescriÃ§Ã£o</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in acoes_recentes %}
+                                    <tr>
+                                        <td>{{ item.data_hora|date:"d/m/Y H:i:s" }}</td>
+                                        <td>{{ item.usuario.username }}</td>
+                                        <td>{{ item.descricao }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr><td colspan="3" class="text-center text-muted py-3">Sem registros recentes.</td></tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if acoes_page_obj.paginator.num_pages > 1 %}
+                        <nav class="auditoria-pagination-wrap" aria-label="PaginaÃ§Ã£o de aÃ§Ãµes">
+                            <ul class="pagination pagination-sm mb-0">
+                                {% if acoes_page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if auditoria_filters_query %}{{ auditoria_filters_query }}&{% endif %}acoes_page={{ acoes_page_obj.previous_page_number }}&tab=acoes">Anterior</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                                {% endif %}
+
+                                {% for page_num in acoes_page_obj.paginator.page_range %}
+                                {% if page_num >= acoes_page_obj.number|add:'-2' and page_num <= acoes_page_obj.number|add:'2' %}
+                                <li class="page-item {% if page_num == acoes_page_obj.number %}active{% endif %}">
+                                    <a class="page-link" href="?{% if auditoria_filters_query %}{{ auditoria_filters_query }}&{% endif %}acoes_page={{ page_num }}&tab=acoes">{{ page_num }}</a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+
+                                {% if acoes_page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if auditoria_filters_query %}{{ auditoria_filters_query }}&{% endif %}acoes_page={{ acoes_page_obj.next_page_number }}&tab=acoes">PrÃ³xima</a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled"><span class="page-link">PrÃ³xima</span></li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="auditoria-card">
+        <header class="auditoria-card__header">
+            <div>
+                <h2><i class="fas fa-file-lines me-2"></i>Logs do Sistema</h2>
+                <p>Leitura rÃ¡pida dos arquivos de log configurados</p>
+            </div>
+        </header>
+        <div class="accordion auditoria-accordion" id="auditLogsAccordion">
+            {% for log in logs_sistema %}
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-log-{{ forloop.counter }}">
+                    <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-log-{{ forloop.counter }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse-log-{{ forloop.counter }}">
+                        {{ log.file_name }} â€¢ {{ log.line_count }} linha(s)
+                    </button>
+                </h2>
+                <div id="collapse-log-{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading-log-{{ forloop.counter }}" data-bs-parent="#auditLogsAccordion">
+                    <div class="accordion-body">
+                        <small class="text-muted d-block mb-2">{{ log.file_path }}</small>
+                        {% if log.exists %}
+                        <pre>{% for line in log.lines %}{{ line }}
+{% empty %}Arquivo sem linhas para exibir.{% endfor %}</pre>
+                        {% else %}
+                        <div class="alert alert-warning mb-0">Arquivo nÃ£o encontrado no caminho configurado.</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-muted">Nenhum arquivo de log configurado para exibiÃ§Ã£o.</div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<div
+    class="modal fade"
+    id="modalNovoUsuario"
+    tabindex="-1"
+    aria-hidden="true"
+    data-preserve-on-open="{% if auditoria_open_modal == 'novo_usuario' %}1{% else %}0{% endif %}">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{% url 'usuarios:auditoria_criar_usuario' %}" autocomplete="off">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Criar novo usuÃ¡rio</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nome completo *</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                name="nome_completo"
+                                autocomplete="off"
+                                value="{{ novo_usuario_form.nome_completo|default:'' }}"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Username *</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                name="username"
+                                autocomplete="off"
+                                value="{{ novo_usuario_form.username|default:'' }}"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">E-mail *</label>
+                            <input
+                                type="email"
+                                class="form-control"
+                                name="email"
+                                autocomplete="off"
+                                value="{{ novo_usuario_form.email|default:'' }}"
+                                required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Perfil / nÃ­vel *</label>
+                            <select class="form-select" name="nivel_acesso" required>
+                                {% for role_key, role_label in role_choices %}
+                                <option value="{{ role_key }}" {% if novo_usuario_form.nivel_acesso == role_key %}selected{% endif %}>{{ role_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Senha inicial *</label>
+                            <div class="input-group">
+                                <input
+                                    type="password"
+                                    class="form-control"
+                                    id="novoUsuarioSenhaInicialInput"
+                                    name="senha_inicial"
+                                    autocomplete="new-password"
+                                    required>
+                                <button
+                                    class="btn btn-outline-secondary auditoria-password-toggle"
+                                    type="button"
+                                    data-toggle-password="novoUsuarioSenhaInicialInput"
+                                    aria-label="Mostrar senha">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Confirmar senha *</label>
+                            <div class="input-group">
+                                <input
+                                    type="password"
+                                    class="form-control"
+                                    id="novoUsuarioConfirmarSenhaInput"
+                                    name="confirmar_senha"
+                                    autocomplete="new-password"
+                                    required>
+                                <button
+                                    class="btn btn-outline-secondary auditoria-password-toggle"
+                                    type="button"
+                                    data-toggle-password="novoUsuarioConfirmarSenhaInput"
+                                    aria-label="Mostrar senha">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="novoUsuarioAtivo" name="ativo" {% if novo_usuario_form %}{% if novo_usuario_form.ativo %}checked{% endif %}{% else %}checked{% endif %}>
+                                <label class="form-check-label" for="novoUsuarioAtivo">UsuÃ¡rio ativo ao criar</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-check me-1"></i>Criar usuÃ¡rio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditarUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="formEditarUsuario" action="">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-pen me-2"></i>Editar usuÃ¡rio</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nome completo *</label>
+                            <input type="text" class="form-control" id="editNomeCompleto" name="nome_completo" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Username *</label>
+                            <input type="text" class="form-control" id="editUsername" name="username" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">E-mail *</label>
+                            <input type="email" class="form-control" id="editEmail" name="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Perfil / nÃ­vel *</label>
+                            <select class="form-select" id="editNivelAcesso" name="nivel_acesso" required>
+                                {% for role_key, role_label in role_choices %}
+                                <option value="{{ role_key }}">{{ role_label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="editUsuarioAtivo" name="ativo">
+                                <label class="form-check-label" for="editUsuarioAtivo">UsuÃ¡rio ativo</label>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-muted small mt-3 mb-0">AlteraÃ§Ãµes de perfil e status ficam registradas no log de auditoria.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar alteraÃ§Ãµes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalResetSenha" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="formResetSenha" action="">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-key me-2"></i>Redefinir senha de usuÃ¡rio</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">UsuÃ¡rio selecionado: <strong id="resetSenhaUsuarioNome">-</strong></p>
+                    <label class="form-label">Nova senha (opcional)</label>
+                    <div class="input-group mb-2">
+                        <input type="password" class="form-control" id="resetNovaSenhaInput" name="nova_senha" placeholder="Se vazio, gera senha provisÃ³ria">
+                        <button
+                            class="btn btn-outline-secondary auditoria-password-toggle"
+                            type="button"
+                            data-toggle-password="resetNovaSenhaInput"
+                            aria-label="Mostrar senha">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <label class="form-label">Confirmar nova senha</label>
+                    <div class="input-group">
+                        <input type="password" class="form-control" id="resetConfirmarSenhaInput" name="confirmar_senha" placeholder="Confirme a nova senha">
+                        <button
+                            class="btn btn-outline-secondary auditoria-password-toggle"
+                            type="button"
+                            data-toggle-password="resetConfirmarSenhaInput"
+                            aria-label="Mostrar senha">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-key me-1"></i>Redefinir senha</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDeletarUsuario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" id="formDeletarUsuario" action="">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-triangle-exclamation me-2 text-danger"></i>Confirmar exclusÃ£o</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">VocÃª tem certeza que deseja excluir este usuÃ¡rio?</p>
+                    <div class="alert alert-warning mb-0">
+                        <div><strong>Nome:</strong> <span id="deleteUsuarioNome">-</span></div>
+                        <div><strong>Username:</strong> @<span id="deleteUsuarioUsername">-</span></div>
+                        <div><strong>Perfil:</strong> <span id="deleteUsuarioNivel">-</span></div>
+                    </div>
+                    <p class="small text-muted mt-2 mb-0">
+                        Essa aÃ§Ã£o Ã© irreversÃ­vel e ficarÃ¡ registrada no log de auditoria.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt me-1"></i>Excluir usuÃ¡rio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/modules/usuarios/auditoria.js' %}?v=20260323-05" defer></script>
+{% endblock %}
+

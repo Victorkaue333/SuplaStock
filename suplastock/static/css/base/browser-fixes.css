@@ -1,0 +1,272 @@
+/**
+ * Browser Fixes - Correções específicas para compatibilidade cross-browser
+ * Aplica fixes para Safari, Firefox, Edge antigo, e outros navegadores
+ * Atualizado: 24/03/2026
+ */
+
+/* ========================================
+   SAFARI FIXES
+   ======================================== */
+
+/* Fix para sidebar em Safari - problemas com position: fixed e altura 100vh */
+@supports (-webkit-appearance: none) {
+    .sidebar {
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
+    
+    /* Fix para scroll momentum no iOS Safari */
+    .sidebar {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .nav-menu {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Fix específico para iOS Safari */
+@supports (-webkit-touch-callout: none) {
+    body {
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+    }
+    
+    .sidebar {
+        height: 100vh;
+        height: -webkit-fill-available;
+    }
+}
+
+/* ========================================
+   FIREFOX FIXES
+   ======================================== */
+
+/* Garantir que o flexbox funcione corretamente no Firefox */
+@-moz-document url-prefix() {
+    .sidebar {
+        display: -moz-box;
+        -moz-box-orient: vertical;
+        -moz-box-direction: normal;
+    }
+    
+    .nav-menu {
+        -moz-box-flex: 1;
+    }
+    
+    .logout-link {
+        -moz-box-flex: 0;
+    }
+}
+
+/* ========================================
+   EDGE LEGACY FIXES (versões antigas)
+   ======================================== */
+
+/* Fix para Edge antigo (baseado em EdgeHTML) */
+@supports (-ms-ime-align: auto) {
+    .sidebar {
+        display: -ms-flexbox;
+        -ms-flex-direction: column;
+    }
+    
+    .nav-menu {
+        -ms-flex: 1 1 auto;
+    }
+    
+    .logout-link {
+        -ms-flex: 0 0 auto;
+    }
+    
+    .main-content {
+        -ms-flex: 1;
+    }
+}
+
+/* ========================================
+   GAP FALLBACK (navegadores que não suportam gap)
+   ======================================== */
+
+/* Fallback para navegadores que não suportam propriedade 'gap' */
+@supports not (gap: 10px) {
+    .logo > * + * {
+        margin-left: 12px;
+    }
+    
+    .nav-link-custom > * + * {
+        margin-left: 12px;
+    }
+    
+    .mobile-logo > * + * {
+        margin-left: 10px;
+    }
+    
+    .footer-content > * + * {
+        margin-left: 20px;
+    }
+    
+    .footer-brand > * + * {
+        margin-left: 10px;
+    }
+}
+
+/* ========================================
+   POSITION STICKY FALLBACK
+   ======================================== */
+
+/* Para navegadores que não suportam position: sticky adequadamente */
+@supports not (position: sticky) {
+    .mobile-header {
+        position: fixed;
+    }
+}
+
+/* ========================================
+   TRANSFORM E TRANSITION FIXES
+   ======================================== */
+
+/* Garantir aceleração por hardware sem sobrescrever transforms */
+.sidebar,
+.sidebar-overlay,
+.mobile-header {
+    -webkit-backface-visibility: hidden;
+    -moz-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform, opacity;
+}
+
+/* ========================================
+   SCROLLBAR FIXES ADICIONAIS
+   ======================================== */
+
+/* Garantir que a scrollbar apareça apenas quando necessário */
+.sidebar {
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* IE 10+ específico */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .sidebar {
+        -ms-overflow-style: -ms-autohiding-scrollbar;
+    }
+}
+
+/* ========================================
+   FLEXBOX IE11 FIXES
+   ======================================== */
+
+/* IE11 não calcula flex corretamente sem height/width explícitos */
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none) {
+    .nav-menu {
+        -ms-flex: 1 1 0px;
+        overflow-y: auto;
+    }
+    
+    .logout-link {
+        -ms-flex: 0 0 auto;
+    }
+    
+    .page-wrapper {
+        display: -ms-flexbox;
+        -ms-flex-direction: row;
+    }
+    
+    .main-content {
+        -ms-flex: 1 1 auto;
+    }
+}
+
+/* ========================================
+   Z-INDEX STACKING CONTEXT
+   ======================================== */
+
+/* Garantir ordem correta de empilhamento em todos os navegadores */
+.mobile-header {
+    isolation: isolate;
+}
+
+.sidebar {
+    isolation: isolate;
+}
+
+/* ========================================
+   WEBKIT BLUR FIX
+   ======================================== */
+
+/* Fix para blur/desfoque em animações webkit */
+.sidebar,
+.nav-link-custom {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================
+   PREVENT TEXT SELECTION ON MOBILE
+   ======================================== */
+
+.hamburger-btn,
+.mobile-logo-icon,
+.logo-icon {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ========================================
+   SAFE AREA INSETS (iPhone X+)
+   ======================================== */
+
+@supports (padding: max(0px)) {
+    .mobile-header {
+        padding-left: max(20px, env(safe-area-inset-left));
+        padding-right: max(20px, env(safe-area-inset-right));
+    }
+    
+    .sidebar {
+        padding-bottom: max(30px, env(safe-area-inset-bottom));
+    }
+}
+
+/* ========================================
+   MOBILE SIDEBAR OVERLAY FIX
+   ======================================== */
+
+/* Garantir que o overlay seja clicável no mobile */
+@media (max-width: 768px) {
+    /* Sidebar deve ocupar menos espaço para deixar área clicável do overlay */
+    .sidebar {
+        max-width: 85vw;
+    }
+    
+    /* Garantir que toques no overlay funcionem */
+    .sidebar-overlay {
+        -webkit-tap-highlight-color: transparent;
+        touch-action: auto;
+    }
+    
+    /* Melhorar visibilidade da área clicável */
+    .sidebar-overlay.active {
+        display: block;
+        cursor: pointer;
+    }
+}
+
+/* ========================================
+   TOUCH INTERACTION IMPROVEMENTS
+   ======================================== */
+
+/* Melhorar área de toque dos botões no mobile */
+@media (max-width: 768px) {
+    .hamburger-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+    
+    .nav-link-custom {
+        min-height: 48px;
+        padding: 16px 25px;
+    }
+}

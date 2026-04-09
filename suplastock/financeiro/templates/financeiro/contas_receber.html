@@ -1,0 +1,822 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+{% load l10n %}
+{% load financeiro_extras %}
+
+{% block title %}Contas a Receber - SuplaStock{% endblock %}
+
+{% block nav_contas_receber %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/financeiro/contas-receber.css' %}?v=20260324-15">
+{% endblock %}
+
+{% block content %}
+
+<div id="contas-receber-config"
+     data-clientes-url="{% url 'financeiro:api_buscar_clientes' %}"
+     data-produtos-url="{% url 'financeiro:api_buscar_produtos' %}"
+     data-validar-estoque-url="{% url 'financeiro:api_validar_estoque' %}"
+     data-cliente-fiado-resumo-template="{% url 'financeiro:api_resumo_cliente_fiado' 0 %}"
+     data-resumo-cards-url="{% url 'financeiro:api_resumo_contas_receber' %}"
+     data-receber-url-template="{% url 'financeiro:registrar_recebimento' 0 %}"
+     data-receber-cliente-url-template="{% url 'financeiro:registrar_recebimento_cliente' 0 %}"
+     data-deletar-url-template="{% url 'financeiro:deletar_conta_receber' 0 %}"
+     data-editar-url-template="{% url 'financeiro:editar_conta_receber' 0 %}"
+     data-cancelar-url-template="{% url 'financeiro:cancelar_conta_receber' 0 %}"
+     data-detalhe-url-template="{% url 'financeiro:detalhe_conta_receber' 0 %}"
+     hidden></div>
+
+<div class="responsive-container">
+    
+    <!-- Header -->
+    <div class="responsive-page-header">
+        <div>
+            <h1 class="responsive-page-title" style="font-size: 32px; font-weight: 800; color: #1e293b; margin-bottom: 8px; display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-hand-holding-usd"></i>
+                Contas a Receber
+            </h1>
+            <p style="color: #64748b; font-size: 15px; margin: 0;">
+                <i class="fas fa-chart-line" style="margin-right: 6px;"></i>
+                Gerencie seus recebimentos e mantenha o fluxo de caixa saudável
+            </p>
+        </div>
+        <div class="contas-header-actions">
+            <div class="header-meta-row">
+                <div class="last-updated-badge">
+                    <i class="fas fa-clock"></i>
+                    <span>Última atualização: {{ ultima_atualizacao|date:"d/m/Y H:i:s" }}</span>
+                </div>
+                <div class="dropdown">
+                    <button class="btn-action responsive-btn btn-keep-blue contas-header-btn contas-header-btn-exportar" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-download"></i> <span>Exportar</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'financeiro:exportar_contas_receber' %}?formato=pdf{% if status_filter %}&status={{ status_filter }}{% endif %}"><i class="fas fa-file-pdf text-danger"></i> Exportar PDF</a></li>
+                        <li><a class="dropdown-item" href="{% url 'financeiro:exportar_contas_receber' %}?formato=excel{% if status_filter %}&status={{ status_filter }}{% endif %}"><i class="fas fa-file-excel text-success"></i> Exportar Excel</a></li>
+                    </ul>
+                </div>
+            </div>
+            <button type="button" class="btn-action btn-fiado btn-keep-green responsive-btn contas-header-btn contas-header-btn-fiado" data-bs-toggle="modal" data-bs-target="#modalVendaFiada">
+                <i class="fas fa-shopping-cart"></i> <span>Nova Venda Fiada</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    {% if vencendo_hoje > 0 %}
+    <div class="alert-box alert-warning" style="background: #FEF3C7; border-left: 4px solid #F59E0B;">
+        <i class="fas fa-clock" style="font-size: 20px; color: #F59E0B;"></i>
+        <div><strong>Hoje!</strong> Você tem {{ vencendo_hoje }} conta(s) vencendo hoje.</div>
+    </div>
+    {% endif %}
+    {% if alertas_vencimento > 0 %}
+    <div class="alert-box alert-warning">
+        <i class="fas fa-exclamation-triangle" style="font-size: 20px;"></i>
+        <div><strong>Atenção!</strong> Você tem {{ alertas_vencimento }} conta(s) vencendo nos próximos 3 dias.</div>
+    </div>
+    {% endif %}
+    {% if total_atrasado > 0 %}
+    <div class="alert-box alert-danger">
+        <i class="fas fa-calendar-times" style="font-size: 20px;"></i>
+        <div><strong>Urgente!</strong> Você tem {{ total_atrasado }} conta(s) atrasada(s). <a href="?status=atrasado" style="color: #991B1B; font-weight: 700;">Ver todas →</a></div>
+    </div>
+    {% endif %}
+
+    <!-- Estatísticas -->
+    <div class="responsive-stats-grid" style="margin-bottom: 24px;">
+        <button type="button" class="responsive-stat-card resumo-card-btn js-resumo-card" data-resumo-tipo="pendente" data-resumo-titulo="Contas Pendentes" aria-label="Ver detalhes de contas pendentes">
+            <div class="stat-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-clock" style="font-size: 24px; color: white;"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" style="font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1;">{{ total_pendente }}</div>
+                <div class="stat-label" style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Contas Pendentes</div>
+            </div>
+        </button>
+        <button type="button" class="responsive-stat-card resumo-card-btn js-resumo-card" data-resumo-tipo="atrasado" data-resumo-titulo="Contas Atrasadas" aria-label="Ver detalhes de contas atrasadas">
+            <div class="stat-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-exclamation-circle" style="font-size: 24px; color: white;"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" style="font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1;">{{ total_atrasado }}</div>
+                <div class="stat-label" style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Contas Atrasadas</div>
+            </div>
+        </button>
+        <button type="button" class="responsive-stat-card resumo-card-btn js-resumo-card" data-resumo-tipo="recebido" data-resumo-titulo="Contas Recebidas" aria-label="Ver detalhes de contas recebidas">
+            <div class="stat-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-check-circle" style="font-size: 24px; color: white;"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" style="font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1;">{{ total_recebido_count }}</div>
+                <div class="stat-label" style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Contas Recebidas</div>
+            </div>
+        </button>
+        <button type="button" class="responsive-stat-card resumo-card-btn js-resumo-card" data-resumo-tipo="total_receber" data-resumo-titulo="Total a Receber" aria-label="Ver detalhes do total a receber">
+            <div class="stat-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-dollar-sign" style="font-size: 24px; color: white;"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-value" style="font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1;">{{ total_receber|currency_br }}</div>
+                <div class="stat-label" style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Total a Receber</div>
+            </div>
+        </button>
+    </div>
+
+    <!-- Filtros -->
+    <section class="app-filter-card contas-filter-card">
+        <form method="GET"
+              action="{% url 'financeiro:contas_receber' %}"
+              class="app-filter-form contas-filter-form"
+              data-filter-form
+              data-auto-submit="true"
+              data-filter-debounce="420">
+            <input type="hidden" name="ordem" value="{{ ordem }}">
+            <input type="hidden" name="dir" value="{{ direcao }}">
+            <div class="app-filter-grid app-filter-grid--compact contas-filter-grid">
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-search"></i> Buscar</label>
+                    <input type="text" name="busca" value="{{ busca }}" class="app-filter-control" placeholder="Nome, código ou observação">
+                </div>
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-user"></i> Cliente</label>
+                    <input type="text" name="cliente" value="{{ cliente_filter }}" class="app-filter-control" placeholder="Nome ou código do cliente">
+                </div>
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-flag"></i> Status</label>
+                    <select name="status" class="app-filter-control">
+                        <option value="">Todos</option>
+                        <option value="pendente" {% if status_filter == 'pendente' %}selected{% endif %}>Pendente</option>
+                        <option value="parcial" {% if status_filter == 'parcial' %}selected{% endif %}>Parcial</option>
+                        <option value="recebido" {% if status_filter == 'recebido' %}selected{% endif %}>Recebido</option>
+                        <option value="atrasado" {% if status_filter == 'atrasado' %}selected{% endif %}>Atrasado</option>
+                        <option value="cancelado" {% if status_filter == 'cancelado' %}selected{% endif %}>Cancelado</option>
+                    </select>
+                </div>
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-calendar-alt"></i> Vencimento</label>
+                    <select name="vencimento" class="app-filter-control">
+                        <option value="">Todos</option>
+                        <option value="hoje" {% if vencimento_filter == 'hoje' %}selected{% endif %}>Hoje</option>
+                        <option value="proximos_7_dias" {% if vencimento_filter == 'proximos_7_dias' %}selected{% endif %}>Próximos 7 dias</option>
+                        <option value="proximos_30_dias" {% if vencimento_filter == 'proximos_30_dias' %}selected{% endif %}>Próximos 30 dias</option>
+                        <option value="mes_atual" {% if vencimento_filter == 'mes_atual' %}selected{% endif %}>Mês atual</option>
+                        <option value="vencidos" {% if vencimento_filter == 'vencidos' %}selected{% endif %}>Vencidos</option>
+                    </select>
+                </div>
+                <div class="app-filter-actions app-filter-actions--auto contas-filter-actions">
+                    <a href="{% url 'financeiro:contas_receber' %}"
+                       class="btn-action app-filter-btn app-filter-btn-clear"
+                       aria-label="Limpar filtros"
+                       title="Limpar filtros">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <!-- Tabela -->
+    <div class="responsive-card" style="padding: 0; overflow: hidden;">
+        <div style="padding: 16px 24px; border-bottom: 2px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+            <div style="font-size: 14px; color: #64748b; font-weight: 600;">
+                <i class="fas fa-list"></i> Mostrando <strong style="color: #667eea;">{{ contas|length }}</strong> cliente(s)
+            </div>
+            {% if cliente_filter or status_filter or vencimento_filter or busca %}
+            <a href="{% url 'financeiro:contas_receber' %}" style="font-size: 13px; color: #DC2626; text-decoration: none; font-weight: 600;">
+                <i class="fas fa-times-circle"></i> Limpar filtros
+            </a>
+            {% endif %}
+        </div>
+        
+        <div class="responsive-table-wrapper">
+            <table class="responsive-table">
+                <thead>
+                    <tr style="background: #495057; border-bottom: 2px solid #343a40;">
+                        <th style="padding: 18px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Cliente</th>
+                        <th class="hide-tablet-col" style="padding: 18px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Descrição</th>
+                        <th style="padding: 18px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Valor Original</th>
+                        <th style="padding: 18px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Total Pago</th>
+                        <th style="padding: 18px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Saldo em Aberto</th>
+                        <th style="padding: 18px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Vencimento</th>
+                        <th style="padding: 18px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Status</th>
+                        <th style="padding: 18px 16px; text-align: center; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for conta in contas %}
+                    <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s ease;">
+                        <td data-label="Cliente" style="padding: 16px;">
+                            <div style="font-weight: 700; color: #1e293b;">{{ conta.cliente_nome }}</div>
+                            {% if conta.cliente_codigo %}
+                            <div style="font-size: 12px; color: #8B5CF6; margin-top: 4px;">
+                                <i class="fas fa-hashtag"></i> {{ conta.cliente_codigo }}
+                            </div>
+                            {% endif %}
+                            {% if conta.possui_fiado and conta.possui_avulsa %}
+                            <span class="badge-fiado" style="margin-top: 6px; display: inline-block;">
+                                <i class="fas fa-book"></i> FIADO + AVULSA
+                            </span>
+                            {% elif conta.possui_fiado %}
+                            <span class="badge-fiado" style="margin-top: 6px; display: inline-block;">
+                                <i class="fas fa-shopping-cart"></i> FIADO
+                            </span>
+                            {% elif conta.possui_avulsa %}
+                            <span class="badge-avulsa" style="margin-top: 6px; display: inline-block;">
+                                <i class="fas fa-file-alt"></i> AVULSA
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Descrição" class="hide-tablet-col" style="padding: 16px;">
+                            <div style="color: #475569;">{{ conta.descricao_resumo }}</div>
+                            {% if conta.total_itens > 0 and conta.conta_referencia_id %}
+                            <button type="button" class="details-inline-trigger" onclick="verDetalhes({{ conta.conta_referencia_id }})" aria-label="Ver detalhes de {{ conta.cliente_nome }}">
+                                <i class="fas fa-box"></i> {{ conta.total_itens }} item(ns) — <u>Ver histórico</u>
+                            </button>
+                            {% endif %}
+                        </td>
+                        <td data-label="Valor Original" style="padding: 16px;">
+                            <div style="font-weight: 700; color: #10B981; font-size: 16px;">
+                                {{ conta.total_lancado|currency_br }}
+                            </div>
+                        </td>
+                        <td data-label="Total Pago" style="padding: 16px;">
+                            <div style="font-weight: 700; color: #0f766e; font-size: 15px;">
+                                {{ conta.total_pago|currency_br }}
+                            </div>
+                            {% if conta.total_pago > 0 and conta.saldo_aberto > 0 %}
+                            <div style="font-size: 11px; color: #1d4ed8; margin-top: 4px;">
+                                Pagamento parcial
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td data-label="Saldo em Aberto" style="padding: 16px;">
+                            <div style="font-weight: 800; font-size: 16px; color: {% if conta.saldo_aberto > 0 %}#DC2626{% else %}#059669{% endif %};">
+                                {{ conta.saldo_aberto|currency_br }}
+                            </div>
+                            {% if conta.saldo_aberto > 0 %}
+                            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
+                                Dívida ativa
+                            </div>
+                            {% else %}
+                            <div style="font-size: 11px; color: #059669; margin-top: 4px;">
+                                Quitado
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td data-label="Vencimento" style="padding: 16px;">
+                            {% if conta.vencimento_relevante %}
+                            {% if conta.esta_atrasado %}
+                            <div class="vencimento-alerta">
+                                <i class="fas fa-exclamation-triangle"></i> {{ conta.vencimento_relevante|date:"d/m/Y" }}
+                            </div>
+                            <div style="font-size: 11px; color: #DC2626; margin-top: 4px;">
+                                Vencido há {{ conta.vencimento_relevante|timesince }}
+                            </div>
+                            {% else %}
+                            <div style="color: #475569;">
+                                <i class="fas fa-calendar"></i> {{ conta.vencimento_relevante|date:"d/m/Y" }}
+                            </div>
+                            {% endif %}
+                            {% else %}
+                            <div style="color: #64748b;">-</div>
+                            {% endif %}
+                        </td>
+                        <td data-label="Status" style="padding: 16px;">
+                            {% if conta.status == 'pendente' %}
+                            <span class="status-badge status-pendente"><i class="fas fa-clock"></i> Pendente</span>
+                            {% elif conta.status == 'parcial' %}
+                            <span class="status-badge" style="background: #DBEAFE; color: #1E40AF;"><i class="fas fa-hand-holding-usd"></i> Parcial</span>
+                            {% elif conta.status == 'recebido' %}
+                            <span class="status-badge status-recebido"><i class="fas fa-check"></i> Recebido</span>
+                            {% elif conta.status == 'atrasado' %}
+                            <span class="status-badge status-atrasado"><i class="fas fa-exclamation"></i> Atrasado</span>
+                            {% elif conta.status == 'cancelado' %}
+                            <span class="status-badge" style="background: #94a3b8; color: white;"><i class="fas fa-ban"></i> Cancelado</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Ações" style="padding: 16px;">
+                            <div class="responsive-actions conta-actions">
+                                {% if conta.conta_referencia_id %}
+                                <button type="button" onclick="verDetalhes({{ conta.conta_referencia_id }})" class="btn-action btn-action-details icon-action-btn" title="Ver Detalhes" aria-label="Ver detalhes de {{ conta.cliente_nome }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% endif %}
+
+                                {% if conta.tem_divida_ativa %}
+                                <button type="button" onclick="registrarRecebimentoCliente({{ conta.cliente_id }}, '{{ conta.cliente_nome|escapejs }}', {{ conta.saldo_aberto|unlocalize }})"
+                                        class="btn-action btn-receber icon-action-btn" title="Registrar Recebimento" aria-label="Registrar recebimento de {{ conta.cliente_nome }}">
+                                    <i class="fas fa-hand-holding-usd"></i>
+                                    <span class="btn-text"></span>
+                                </button>
+                                {% endif %}
+
+                                {% if conta.tem_divida_ativa or conta.possui_fiado %}
+                                <button type="button"
+                                        onclick="abrirNovoLancamentoFiado({{ conta.cliente_id }}, '{{ conta.cliente_nome|escapejs }}', '{{ conta.cliente_codigo|default:''|escapejs }}', {{ conta.conta_referencia_id|default:'null' }})"
+                                        class="btn-action btn-action-edit icon-action-btn"
+                                        title="Adicionar nova compra ao fiado"
+                                        aria-label="Adicionar nova compra ao fiado para {{ conta.cliente_nome }}">
+                                    <i class="fas fa-pen-to-square"></i>
+                                </button>
+                                {% endif %}
+
+                                {% if conta.conta_referencia_id and conta.status != 'recebido' and conta.status != 'parcial' and conta.status != 'cancelado' %}
+                                <form method="POST"
+                                      action="{% url 'financeiro:deletar_conta_receber' conta.conta_referencia_id %}"
+                                      class="js-confirm-delete-conta"
+                                      style="display: inline-block;"
+                                      data-confirm-title="Excluir lançamento de fiado"
+                                      data-confirm-message="Tem certeza que deseja EXCLUIR este lançamento (conta #{{ conta.conta_referencia_id }})? Esta ação é permanente.">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="btn-action btn-action-delete icon-action-btn"
+                                            title="Excluir lançamento"
+                                            aria-label="Excluir lançamento de {{ conta.cliente_nome }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% elif conta.status == 'parcial' or conta.status == 'recebido' %}
+                                <span class="btn-action btn-action-delete icon-action-btn is-disabled"
+                                      title="Exclusão indisponível para conta parcial/paga"
+                                      aria-label="Exclusão indisponível">
+                                    <i class="fas fa-trash"></i>
+                                </span>
+                                {% endif %}
+
+                                {% if not conta.tem_divida_ativa %}
+                                <span class="status-badge status-recebido" style="font-size: 11px;">
+                                    <i class="fas fa-check-double"></i> Sem saldo
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 80px 20px;">
+                            <div class="empty-state">
+                                <i class="fas fa-inbox"></i>
+                                <p style="font-size: 16px; margin: 0;">Nenhuma conta a receber encontrada</p>
+                                <p style="font-size: 14px; margin-top: 8px; opacity: 0.7;">Clique em "Nova Venda Fiada" para começar</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Rodapé com Totais -->
+        {% if contas %}
+        <div class="total-footer">
+            <div style="font-size: 16px; color: #DC2626;">
+                <i class="fas fa-arrow-down"></i> Total a Receber: <span style="font-size: 20px; font-weight: 800;">{{ total_receber|currency_br }}</span>
+            </div>
+            <div style="font-size: 16px; color: #10B981;">
+                <i class="fas fa-arrow-up"></i> Total Recebido: <span style="font-size: 20px; font-weight: 800;">{{ total_recebido|currency_br }}</span>
+            </div>
+        </div>
+        
+        <!-- Paginação -->
+        {% if contas.has_other_pages %}
+        <div style="padding: 20px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; background: #f8fafc; border-top: 1px solid #e2e8f0;">
+            {% if contas.has_previous %}
+            <a href="?page=1{% if filtros_query_string %}&{{ filtros_query_string }}{% endif %}" class="btn-action btn-page-control" aria-label="Primeira página"><i class="fas fa-angle-double-left"></i></a>
+            <a href="?page={{ contas.previous_page_number }}{% if filtros_query_string %}&{{ filtros_query_string }}{% endif %}" class="btn-action btn-page-control" aria-label="Página anterior"><i class="fas fa-angle-left"></i></a>
+            {% endif %}
+            <span style="padding: 8px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 8px; font-weight: 700;">
+                Página {{ contas.number }} de {{ contas.paginator.num_pages }}
+            </span>
+            {% if contas.has_next %}
+            <a href="?page={{ contas.next_page_number }}{% if filtros_query_string %}&{{ filtros_query_string }}{% endif %}" class="btn-action btn-page-control" aria-label="Próxima página"><i class="fas fa-angle-right"></i></a>
+            <a href="?page={{ contas.paginator.num_pages }}{% if filtros_query_string %}&{{ filtros_query_string }}{% endif %}" class="btn-action btn-page-control" aria-label="Última página"><i class="fas fa-angle-double-right"></i></a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- ==================== MODAL: RESUMO DOS CARDS ==================== -->
+<div class="modal fade" id="modalResumoCards" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); border-radius: 20px 20px 0 0;">
+                <div>
+                    <h5 class="modal-title" id="resumoCardsTitulo"><i class="fas fa-chart-pie"></i> Resumo</h5>
+                    <p class="modal-subtitle" id="resumoCardsSubtitulo">Carregando informações...</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="resumo-cards-headline">
+                    <span id="resumoCardsBadge" class="status-badge" style="background: #E2E8F0; color: #334155;">0 registros</span>
+                    <strong id="resumoCardsValorTotal" style="font-size: 18px; color: #0F172A;">R$ 0,00</strong>
+                </div>
+                <div id="resumoCardsConteudo">
+                    <div style="text-align: center; padding: 32px;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 28px; color: #64748b;"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-action" data-bs-dismiss="modal" style="background: #e2e8f0; color: #475569;">
+                    <i class="fas fa-times"></i> Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL: NOVA VENDA FIADA (CARRINHO) ==================== -->
+<div class="modal fade" id="modalVendaFiada" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 28px 36px; background: #000000; border-radius: 20px 20px 0 0;">
+                <div>
+                    <h5 class="modal-title" style="font-size: 24px; font-weight: 800; color: white; margin-bottom: 6px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-shopping-cart"></i>
+                        Nova Venda Fiada
+                    </h5>
+                    <p class="modal-subtitle" style="font-size: 14px; color: rgba(255,255,255,0.9); margin: 0;">Monte o carrinho de produtos e gere uma conta a receber</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
+            </div>
+            <form id="formVendaFiada" method="POST" action="{% url 'financeiro:nova_venda_fiada' %}">
+                {% csrf_token %}
+                <input type="hidden" name="carrinho_json" id="carrinho_json">
+                <input type="hidden" name="itens" id="fiado_itens_json">
+                <input type="hidden" name="cliente_id" id="fiado_cliente_id_post">
+                <input type="hidden" name="cliente_nome" id="fiado_cliente_nome_post">
+                <input type="hidden" name="origem_conta_id" id="fiado_origem_conta_id">
+                <div class="modal-body" style="padding: 36px; background: #f8fafc;">
+
+                    <!-- Seleção de Cliente com busca -->
+                    <div style="margin-bottom: 24px;">
+                        <label class="form-label required"><i class="fas fa-user"></i> Cliente</label>
+                        <div class="client-search-box">
+                            <input type="text" id="fiado_cliente_busca" class="form-control" placeholder="Digite o nome do cliente..." autocomplete="off" style="border-radius: 12px;">
+                            <input type="hidden" name="cliente" id="fiado_cliente_id">
+                            <div id="fiado_cliente_results" class="client-search-results"></div>
+                        </div>
+                        <small style="font-size: 11px; color: #64748b;">Digite para buscar. Se não existir cadastro, a venda será registrada com este nome.</small>
+                        <div id="fiado_cliente_selecionado" style="display: none; margin-top: 10px; padding: 12px 16px; background: #F0FDF4; border-radius: 10px; border: 1px solid #10B981;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <i class="fas fa-user-check" style="color: #10B981;"></i>
+                                    <strong id="fiado_cliente_nome_display" style="color: #065F46;"></strong>
+                                    <span id="fiado_cliente_codigo_display" style="color: #8B5CF6; font-size: 12px; margin-left: 8px;"></span>
+                                </div>
+                                <button type="button" onclick="limparClienteFiado()" class="fiado-client-clear-btn" aria-label="Remover cliente selecionado"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+
+                        <div id="fiado_cliente_resumo_card" style="display: none; margin-top: 12px; background: #EEF2FF; border-radius: 12px; border: 1px solid #C7D2FE; padding: 12px 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap;">
+                                <strong style="color: #312E81; font-size: 13px;"><i class="fas fa-book"></i> Resumo do Fiado do Cliente</strong>
+                                <span id="fiado_cliente_resumo_badge" class="status-badge" style="background: #DBEAFE; color: #1D4ED8; font-size: 11px; padding: 4px 10px;">0 conta(s) ativa(s)</span>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-3 col-6">
+                                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700;">Saldo Aberto</div>
+                                    <div id="fiado_cliente_resumo_saldo" style="font-size: 18px; font-weight: 800; color: #DC2626;">R$ 0,00</div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700;">Total Recebido</div>
+                                    <div id="fiado_cliente_resumo_recebido" style="font-size: 16px; font-weight: 700; color: #059669;">R$ 0,00</div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700;">Última Compra</div>
+                                    <div id="fiado_cliente_resumo_ultima_compra" style="font-size: 13px; font-weight: 700; color: #334155;">-</div>
+                                </div>
+                                <div class="col-md-3 col-6">
+                                    <div style="font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 700;">Último Pagamento</div>
+                                    <div id="fiado_cliente_resumo_ultimo_pagamento" style="font-size: 13px; font-weight: 700; color: #334155;">-</div>
+                                </div>
+                            </div>
+                            <small id="fiado_cliente_resumo_hint" style="display: block; margin-top: 8px; color: #475569; font-size: 11px;"></small>
+                        </div>
+                    </div>
+
+                    <!-- Seção de Adicionar Produto -->
+                    <div style="background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%); border: 2px solid #0EA5E9; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+                        <h6 style="font-size: 16px; font-weight: 700; color: #0369A1; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-plus-circle"></i>
+                            Adicionar Produto ao Carrinho
+                        </h6>
+                        <div class="row g-3">
+                            <div class="col-md-5">
+                                <label class="form-label" style="font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 8px;">
+                                    <i class="fas fa-box" style="color: #0EA5E9; font-size: 11px; margin-right: 4px;"></i>
+                                    Produto <span style="color: #DC2626;">*</span>
+                                </label>
+                                <select id="fiado_produto_select_temp" class="form-select" style="padding: 12px 16px; border: 2px solid #BAE6FD; border-radius: 10px; font-size: 14px;">
+                                    <option value="">Selecione um produto...</option>
+                                    {% for produto in produtos %}
+                                    <option value="{{ produto.id }}"
+                                            data-nome="{{ produto.nome }}"
+                                            data-categoria="{{ produto.categoria.nome|default:'Sem categoria' }}"
+                                            data-preco-custo="{{ produto.preco_custo_unitario }}"
+                                            data-preco-venda="{{ produto.preco_venda_sugerido }}"
+                                            data-estoque="{{ produto.estoque_atual }}">
+                                        {{ produto.nome }}{% if produto.categoria %} [{{ produto.categoria.nome }}]{% endif %} | Estoque: {{ produto.estoque_atual }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label" style="font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 8px;">
+                                    <i class="fas fa-hashtag" style="color: #0EA5E9; font-size: 11px; margin-right: 4px;"></i>
+                                    Quantidade <span style="color: #DC2626;">*</span>
+                                </label>
+                                <input type="number" id="fiado_quantidade_input" class="form-control" placeholder="0" min="1" value="1" style="padding: 12px 16px; border: 2px solid #BAE6FD; border-radius: 10px; font-size: 14px;">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" style="font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 8px;">
+                                    <i class="fas fa-tag" style="color: #0EA5E9; font-size: 11px; margin-right: 4px;"></i>
+                                    Preço Unitário <span style="color: #DC2626;">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="border: 2px solid #BAE6FD; border-right: none; border-radius: 10px 0 0 10px; background: #EFF6FF; color: #64748b; font-weight: 600; font-size: 13px;">R$</span>
+                                    <input type="text" id="fiado_preco_unitario_input" class="form-control" value="0,00" readonly style="padding: 12px 16px; border: 2px solid #BAE6FD; border-left: none; border-radius: 0 10px 10px 0; font-size: 14px;">
+                                </div>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="button" id="fiado_btn_add_item" class="btn w-100" style="padding: 12px; background: #DC2626; color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; transition: all 0.3s;">
+                                    <i class="fas fa-cart-plus me-2"></i>Adicionar
+                                </button>
+                            </div>
+                        </div>
+                        <small id="fiado_estoque_warning" style="font-size: 12px; margin-top: 8px; display: block;"></small>
+                    </div>
+
+                    <!-- Carrinho de Compras -->
+                    <div id="fiado_carrinho_section" style="display: none;">
+                        <h6 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-shopping-basket" style="color: #667eea;"></i>
+                            Carrinho de Compras
+                            <span id="fiado_carrinho_count" style="background: #667eea; color: white; padding: 2px 10px; border-radius: 12px; font-size: 13px; margin-left: 8px;">0</span>
+                        </h6>
+                        <div class="fiado-carrinho-table-wrapper" style="background: white; border: 2px solid #e2e8f0; border-radius: 16px; overflow: hidden; margin-bottom: 20px;">
+                            <table class="table table-hover mb-0" style="font-size: 14px;">
+                                <thead style="background: #F8FAFC;">
+                                    <tr>
+                                        <th style="padding: 14px; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase;">Produto</th>
+                                        <th style="padding: 14px; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase; text-align: center;">Qtd.</th>
+                                        <th style="padding: 14px; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase; text-align: right;">Preço Un.</th>
+                                        <th style="padding: 14px; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase; text-align: right;">Subtotal</th>
+                                        <th style="padding: 14px; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase; text-align: center;">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fiado_carrinho_itens"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Resumo da Venda -->
+                    <div id="fiado_resumo_section" style="display: none; background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%); border: 2px solid #10B981; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 11px; color: #065F46; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total de Itens</div>
+                                    <div id="fiado_total_itens" style="font-size: 28px; font-weight: 800; color: #059669;">0</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 11px; color: #065F46; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Total da Venda</div>
+                                    <div id="fiado_total_venda" style="font-size: 28px; font-weight: 800; color: #059669;">R$ 0,00</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 11px; color: #065F46; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Lucro Total</div>
+                                    <div id="fiado_lucro_total" style="font-size: 28px; font-weight: 800; color: #059669;">R$ 0,00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mensagem de carrinho vazio -->
+                    <div id="fiado_carrinho_vazio" style="text-align: center; padding: 60px 20px;">
+                        <i class="fas fa-cart-arrow-down" style="font-size: 64px; color: #CBD5E1; margin-bottom: 16px;"></i>
+                        <h5 style="color: #64748b; font-weight: 600; margin-bottom: 8px;">Carrinho Vazio</h5>
+                        <p style="color: #94A3B8; font-size: 14px;">Adicione produtos ao carrinho para continuar</p>
+                    </div>
+
+                    <!-- Data de Vencimento e Observações -->
+                    <div class="grid-2-cols" style="margin-top: 24px;">
+                        <div>
+                            <label class="form-label required"><i class="fas fa-calendar-alt"></i> Data de Vencimento</label>
+                            <input type="date" name="data_vencimento" id="fiado_data_vencimento" class="form-control" required style="border-radius: 12px;">
+                        </div>
+                        <div>
+                            <label class="form-label"><i class="fas fa-comment"></i> Observações</label>
+                            <input type="text" name="observacoes" class="form-control" placeholder="Observação sobre a venda..." style="border-radius: 12px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-action" data-bs-dismiss="modal" style="flex: 1; background: #e2e8f0; color: #475569; padding: 14px;">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" id="fiado_btn_submit" class="btn-action btn-fiado is-disabled" style="flex: 1; padding: 14px;" disabled>
+                        <i class="fas fa-check"></i> Registrar Venda Fiada
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL: REGISTRAR RECEBIMENTO ==================== -->
+<div class="modal fade" id="modalRegistrarRecebimento" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); border-radius: 20px 20px 0 0;">
+                <div>
+                    <h5 class="modal-title"><i class="fas fa-hand-holding-usd"></i> Registrar Recebimento</h5>
+                    <p class="modal-subtitle">Confirme o recebimento desta conta</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form id="formRecebimento" method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="idempotency_key" id="modal_idempotency_key">
+                <div class="modal-body">
+                    <div style="background: #F0FDF4; padding: 20px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid #10B981;">
+                        <div style="font-size: 13px; color: #166534; font-weight: 600; margin-bottom: 8px;">CLIENTE</div>
+                        <div id="modal_cliente_nome" style="font-size: 18px; font-weight: 700; color: #065F46; margin-bottom: 12px;">-</div>
+                        <div style="font-size: 13px; color: #166534; font-weight: 600; margin-bottom: 4px;">SALDO EM ABERTO</div>
+                        <div id="modal_valor" style="font-size: 28px; font-weight: 800; color: #059669;">-</div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label class="form-label required"><i class="fas fa-dollar-sign"></i> Valor Recebido (R$)</label>
+                        <input type="number" name="valor_recebido" id="modal_valor_recebido" class="form-control" step="0.01" min="0.01" required>
+                        <small style="font-size: 11px; color: #64748b;">Não pode ser maior que o saldo em aberto.</small>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label class="form-label required"><i class="fas fa-credit-card"></i> Forma de Pagamento</label>
+                        <select name="forma_pagamento" class="form-select" required>
+                            <option value="Dinheiro">Dinheiro</option>
+                            <option value="Pix">Pix</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito</option>
+                            <option value="Cartão de Débito">Cartão de Débito</option>
+                            <option value="Transferência">Transferência</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label class="form-label required"><i class="fas fa-calendar"></i> Data do Recebimento</label>
+                        <input type="date" name="data_recebimento" class="form-control" required>
+                    </div>
+                    <div>
+                        <label class="form-label"><i class="fas fa-comment"></i> Observações</label>
+                        <textarea name="observacoes" class="form-control" rows="2" placeholder="Observações..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-action" data-bs-dismiss="modal" style="flex: 1; background: #e2e8f0; color: #475569;">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" id="btn_confirmar_recebimento" class="btn-action btn-success" style="flex: 1;">
+                        <i class="fas fa-check"></i> Confirmar Recebimento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL: DETALHES DA CONTA ==================== -->
+<div class="modal fade" id="modalDetalhes" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header" id="modalDetalhesHeader" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px 20px 0 0;">
+                <div>
+                    <h5 class="modal-title"><i class="fas fa-file-invoice"></i> Detalhes da Conta</h5>
+                    <p class="modal-subtitle">Informações completas da conta a receber</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body" id="modalDetalhesBody">
+                <div style="text-align: center; padding: 40px;"><i class="fas fa-spinner fa-spin" style="font-size: 32px; color: #667eea;"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL: EDITAR CONTA ==================== -->
+<div class="modal fade" id="modalEditarConta" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);">
+                <div>
+                    <h5 class="modal-title"><i class="fas fa-edit"></i> Editar Conta a Receber</h5>
+                    <p class="modal-subtitle">Altere os dados da conta</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form id="formEditarConta" method="POST">
+                {% csrf_token %}
+                <input type="hidden" id="edit_conta_id" name="conta_id">
+                <div class="modal-body">
+                    <div class="grid-2-cols" style="margin-bottom: 20px;">
+                        <div>
+                            <label class="form-label required"><i class="fas fa-user"></i> Cliente</label>
+                            <select name="cliente" id="edit_cliente" class="form-select" required>
+                                <option value="">Selecione...</option>
+                                {% for cliente in clientes %}
+                                <option value="{{ cliente.id }}">{{ cliente.nome }}{% if cliente.codigo %} ({{ cliente.codigo }}){% endif %}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label"><i class="fas fa-shopping-cart"></i> Venda Relacionada</label>
+                            <select name="venda" id="edit_venda" class="form-select">
+                                <option value="">Nenhuma</option>
+                                {% for venda in vendas %}
+                                <option value="{{ venda.id }}">Venda #{{ venda.id }} - {{ venda.valor_pendente|currency_br }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label class="form-label required"><i class="fas fa-align-left"></i> Descrição</label>
+                        <input type="text" name="descricao" id="edit_descricao" class="form-control" required maxlength="255">
+                    </div>
+                    <div class="grid-2-cols" style="margin-bottom: 20px;">
+                        <div>
+                            <label class="form-label required"><i class="fas fa-dollar-sign"></i> Valor (R$)</label>
+                            <input type="number" name="valor" id="edit_valor" class="form-control" step="0.01" min="0.01" required>
+                        </div>
+                        <div>
+                            <label class="form-label required"><i class="fas fa-calendar-alt"></i> Vencimento</label>
+                            <input type="date" name="data_vencimento" id="edit_data_vencimento" class="form-control" required>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label class="form-label"><i class="fas fa-flag"></i> Status</label>
+                        <select name="status" id="edit_status" class="form-select">
+                            <option value="pendente">Pendente</option>
+                            <option value="parcial">Parcial</option>
+                            <option value="atrasado">Atrasado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="form-label"><i class="fas fa-comment"></i> Observações</label>
+                        <textarea name="observacoes" id="edit_observacoes" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-action" data-bs-dismiss="modal" style="flex: 1; background: #e2e8f0; color: #475569;"><i class="fas fa-times"></i> Cancelar</button>
+                    <button type="submit" class="btn-action" style="flex: 1; background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%); color: white;"><i class="fas fa-save"></i> Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL: CANCELAR CONTA ==================== -->
+<div class="modal fade" id="modalCancelarConta" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); border-radius: 20px 20px 0 0;">
+                <div>
+                    <h5 class="modal-title"><i class="fas fa-ban"></i> Cancelar Conta</h5>
+                    <p class="modal-subtitle">Esta ação não pode ser desfeita</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form id="formCancelarConta" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div style="background: #FEF3C7; padding: 20px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid #F59E0B;">
+                        <div style="font-size: 13px; color: #92400E; font-weight: 600; margin-bottom: 8px;">CLIENTE</div>
+                        <div id="cancelar_cliente_nome" style="font-size: 18px; font-weight: 700; color: #78350F;">-</div>
+                    </div>
+                    <div>
+                        <label class="form-label required"><i class="fas fa-comment"></i> Motivo</label>
+                        <textarea name="motivo" class="form-control" rows="3" placeholder="Motivo do cancelamento..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-action" data-bs-dismiss="modal" style="flex: 1; background: #e2e8f0; color: #475569;"><i class="fas fa-times"></i> Voltar</button>
+                    <button type="submit" class="btn-action" style="flex: 1; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: white;"><i class="fas fa-ban"></i> Confirmar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<form id="formDeleteContaFromModal" method="POST" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/modules/financeiro/contas-receber.js' %}?v=20260324-12" defer></script>
+{% endblock %}
+

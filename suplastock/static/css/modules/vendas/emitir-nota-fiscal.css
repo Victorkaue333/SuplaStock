@@ -1,0 +1,186 @@
+﻿/* Estilos movidos para cá para limpar o HTML */
+    .responsive-table {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+        padding: 24px;
+        overflow-x: auto; /* Adicionado para responsividade */
+    }
+
+    .table-toolbar {
+        margin-bottom: 12px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .table-toolbar label {
+        margin: 0;
+        color: #64748b;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    .table-toolbar .btn-sm {
+        margin-left: 18px;
+        font-weight: 600;
+    }
+
+    .emitir-nota-filter-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    }
+
+    .emitir-nota-filter-actions {
+        justify-content: flex-end;
+    }
+
+    /* Estilos da Tabela */
+    .tabela-notas {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    }
+    .tabela-notas thead tr {
+        background: #1e293b;
+    }
+    .tabela-notas th {
+        padding: 14px 10px;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 800;
+        text-transform: uppercase;
+        text-align: left; /* Padrão é esquerda */
+        border-bottom: 2px solid #334155;
+        vertical-align: middle;
+    }
+    .tabela-notas td {
+        padding: 12px 10px; /* Um pouco mais de padding */
+        vertical-align: middle;
+        text-align: left;
+    }
+
+    /* MELHORIA UX: Classes de alinhamento */
+    .tabela-notas .text-center {
+        text-align: center;
+    }
+    .tabela-notas .text-right {
+        text-align: right;
+    }
+
+    .tabela-notas tbody tr {
+        transition: background 0.2s;
+    }
+    .tabela-notas tbody tr:nth-child(even) {
+        background: #f8fafc;
+    }
+    .tabela-notas tbody tr:nth-child(odd) {
+        background: #f1f5f9;
+    }
+    .tabela-notas tbody tr:hover {
+        background: #e0e7ef;
+        font-size: 15px; /* Este style no hover parece estranho, mas mantive */
+        text-align: center;
+        vertical-align: middle;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .tabela-notas .valor,
+    .tabela-notas .valor-total {
+        color: #059669;
+        font-weight: 800;
+        text-align: right; /* MELHORIA UX: Alinhado à direita */
+    }
+    .tabela-notas .quantidade {
+        font-weight: 700;
+        text-align: center; /* MELHORIA UX: Alinhado ao centro */
+    }
+    .tabela-notas .acoes {
+        text-align: center; /* Centraliza o botão de dropdown */
+    }
+    .tabela-notas .badge {
+        font-size: 15px;
+        padding: 6px 14px;
+        border-radius: 8px;
+    }
+    .tabela-notas .btn {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 14px;
+        outline: none;
+        transition: box-shadow 0.2s;
+    }
+    .tabela-notas .btn:focus {
+        box-shadow: 0 0 0 2px #334155;
+    }
+    
+    /* Corrige o botão de dropdown para não ter a seta de "split" */
+    .tabela-notas .dropdown-toggle::after {
+        display: none;
+    }
+
+    /* ================================
+       RESPONSIVE STYLES
+       ================================ */
+    @media (max-width: 1024px) {
+        .responsive-page-header {
+            flex-direction: column;
+            align-items: stretch !important;
+        }
+        
+        .emitir-nota-filter-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .emitir-nota-filter-actions {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .responsive-page-header > div:first-child h1 {
+            font-size: 22px !important;
+            text-align: center;
+        }
+        
+        .responsive-page-header > div:first-child p {
+            text-align: center;
+        }
+        
+        .responsive-page-header > div:last-child {
+            width: 100%;
+        }
+        
+        .responsive-page-header .responsive-btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .table-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+
+        .emitir-nota-filter-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .table-toolbar .btn-sm {
+            margin-left: 0;
+            width: 100%;
+        }
+        
+        .modal-dialog {
+            margin: 8px !important;
+        }
+        
+        .modal-content {
+            border-radius: 12px;
+        }
+        
+        .modal-body {
+            padding: 16px;
+        }
+    }

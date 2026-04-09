@@ -1,0 +1,2 @@
+# Este diretório é usado pelo Certbot para validação de domínio
+# Ao rodar: certbot certonly --webroot -w /var/www/certbot -d seudominio.com

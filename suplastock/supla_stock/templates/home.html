@@ -1,0 +1,98 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Acesso Rápido{% endblock %}
+
+{% block nav_home %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/home/acesso-rapido.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;">
+        <div class="page-header">
+            {% if request.user.is_authenticated %}
+                {% with display_name=request.user.get_full_name|default:request.user.first_name|default:request.user.username %}
+                    <h1 class="page-title">Olá, {{ display_name }}!</h1>
+                {% endwith %}
+            {% else %}
+                <h1 class="page-title">Olá!</h1>
+            {% endif %}
+            <p class="page-subtitle">Selecione uma opção para começar</p>
+        </div>
+
+        <!-- Cards de Navegação -->
+        <div class="cards-grid">
+            {% if request.user.has_full_operational_access %}
+            <a href="{% url 'financeiro:dashboard' %}" class="dashboard-card">
+                <div class="card-icon-wrapper card-icon-green">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3 class="card-title">Resumo Operacional</h3>
+            </a>
+
+            <a href="{% url 'financeiro:dashboard_financeiro' %}" class="dashboard-card">
+                <div class="card-icon-wrapper card-icon-cyan">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="card-title">Dashboard Financeiro</h3>
+            </a>
+
+            <a href="{% url 'financeiro:relatorios_gerenciais' %}" class="dashboard-card">
+                <div class="card-icon-wrapper card-icon-orange">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <h3 class="card-title">Relatórios</h3>
+            </a>
+
+            <a href="{% url 'financeiro:fluxo_caixa' %}" class="dashboard-card">
+                <div class="card-icon-wrapper card-icon-indigo">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <h3 class="card-title">Fluxo de Caixa</h3>
+            </a>
+            {% endif %}
+
+            {% if request.user.is_estoquista or request.user.is_vendedor or request.user.has_full_operational_access %}
+            <a href="{% url 'estoque:gestao_produtos' %}" class="dashboard-card">
+                <div class="card-icon-wrapper card-icon-blue">
+                    <i class="fas fa-box"></i>
+                </div>
+                <h3 class="card-title">Gestão de Estoque</h3>
+            </a>
+            {% endif %}
+
+            {% if request.user.is_vendedor or request.user.has_full_operational_access %}
+            <a href="{% url 'vendas:gestao_vendas' %}" class="dashboard-card">
+                <div class="card-icon-wrapper card-icon-purple">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3 class="card-title">Gestão de Vendas</h3>
+            </a>
+
+            <a href="{% url 'financeiro:contas_receber' %}" class="dashboard-card">
+                <div class="card-icon-wrapper card-icon-teal">
+                    <i class="fas fa-hand-holding-usd"></i>
+                </div>
+                <h3 class="card-title">Contas a Receber</h3>
+            </a>
+
+            <a href="{% url 'financeiro:inadimplencia' %}" class="dashboard-card">
+                <div class="card-icon-wrapper card-icon-red">
+                    <i class="fas fa-user-clock"></i>
+                </div>
+                <h3 class="card-title">Inadimplência</h3>
+            </a>
+
+            <a href="{% url 'financeiro:alertas_notificacoes' %}" class="dashboard-card">
+                <div class="card-icon-wrapper card-icon-orange">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h3 class="card-title">Alertas</h3>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+

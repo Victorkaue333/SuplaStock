@@ -1,0 +1,155 @@
+﻿{% extends "base.html" %}
+
+{% block title %}CobranÃ§a - SuplaStock{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="fas fa-file-invoice-dollar me-2"></i>CobranÃ§a / Recebimentos</h4>
+    </div>
+
+    <div class="row">
+        <!-- Coluna: Selecionar Cliente -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h6 class="mb-0"><i class="fas fa-users me-2"></i>Selecionar Cliente</h6>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        {% for cliente in clientes %}
+                        <a href="{% url 'vendas:tela_cobranca_cliente' cliente.id %}"
+                           class="list-group-item list-group-item-action {% if cliente_selecionado and cliente.id == cliente_selecionado.id %}active{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>{{ cliente.nome }}</span>
+                                {% if cliente.saldo_devedor > 0 %}
+                                <span class="badge bg-danger">R$ {{ cliente.saldo_devedor|floatformat:2 }}</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                        {% empty %}
+                        <p class="text-muted text-center">Nenhum cliente cadastrado.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna: Detalhes do Cliente -->
+        <div class="col-md-8">
+            {% if cliente_selecionado %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0"><i class="fas fa-user me-2"></i>{{ cliente_selecionado.nome }}</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Saldo Devedor:</strong> <span class="text-danger fw-bold">R$ {{ cliente_selecionado.saldo_devedor|floatformat:2 }}</span></p>
+
+                    {% if pendencias_gerenciadas_contas > 0 %}
+                    <div class="alert alert-info py-2 mt-2 mb-3">
+                        {{ pendencias_gerenciadas_contas }} pendÃªncia(s) deste cliente estÃ¡(Ã£o) vinculada(s) a contas a receber.
+                        Registre esses recebimentos na tela <strong>Contas a Receber</strong>.
+                    </div>
+                    {% endif %}
+
+                    <!-- Vendas Pendentes -->
+                    <h6 class="mt-3">Vendas Pendentes</h6>
+                    {% if vendas_pendentes %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Valor</th>
+                                    <th>Status</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for venda in vendas_pendentes %}
+                                <tr>
+                                    <td>{{ venda.produto.nome }}</td>
+                                    <td>R$ {{ venda.valor_total|floatformat:2 }}</td>
+                                    <td><span class="badge bg-warning text-dark">{{ venda.status_pagamento }}</span></td>
+                                    <td>{{ venda.data_venda|date:"d/m/Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">Nenhuma venda pendente disponÃ­vel nesta tela.</p>
+                    {% endif %}
+
+                    <!-- Registrar Pagamento -->
+                    <h6 class="mt-4">Registrar Pagamento</h6>
+                    <form method="post" action="{% url 'vendas:registrar_pagamento' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="cliente_id" value="{{ cliente_selecionado.id }}">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <input type="number" step="0.01" min="0.01" class="form-control" name="valor_pago" placeholder="Valor" required>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" name="forma_pagamento" required>
+                                    <option value="">Forma</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                    <option value="Pix">PIX</option>
+                                    <option value="CartÃ£o de CrÃ©dito">CartÃ£o CrÃ©dito</option>
+                                    <option value="CartÃ£o de DÃ©bito">CartÃ£o DÃ©bito</option>
+                                    <option value="TransferÃªncia">TransferÃªncia</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="date" class="form-control" name="data_pagamento" required>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fas fa-check me-1"></i>Registrar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <input type="text" class="form-control" name="observacoes" placeholder="ObservaÃ§Ãµes (opcional)">
+                        </div>
+                    </form>
+
+                    <!-- HistÃ³rico de Pagamentos -->
+                    {% if historico_pagamentos %}
+                    <h6 class="mt-4">Ãšltimos Pagamentos</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Valor</th>
+                                    <th>Forma</th>
+                                    <th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pag in historico_pagamentos %}
+                                <tr>
+                                    <td class="text-success fw-bold">R$ {{ pag.valor_pago|floatformat:2 }}</td>
+                                    <td>{{ pag.forma_pagamento }}</td>
+                                    <td>{{ pag.data_pagamento|date:"d/m/Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-hand-pointer fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">Selecione um cliente na lista ao lado para ver detalhes e registrar pagamentos.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

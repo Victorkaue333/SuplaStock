@@ -1,0 +1,11 @@
+﻿[build]
+builder = "RAILPACK"
+buildCommand = "cd suplastock && DATABASE_URL='' python manage.py collectstatic --noinput"
+
+[deploy]
+preDeployCommand = "cd suplastock && python manage.py migrate --noinput && python manage.py ensure_default_categories && python manage.py ensure_bootstrap_admin && python manage.py ensure_role_users"
+startCommand = "cd suplastock && if [ -z \"$DATABASE_URL\" ]; then python manage.py migrate --noinput && python manage.py ensure_default_categories && python manage.py ensure_bootstrap_admin && python manage.py ensure_role_users; fi && gunicorn suplastock.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120"
+healthcheckPath = "/healthz/"
+healthcheckTimeout = 180
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

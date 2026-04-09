@@ -1,0 +1,191 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestão de Clientes {% endblock %}
+
+{% block nav_clientes %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/vendas/gestao-clientes.css' %}?v=20260324-01">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid p-4">
+    <!-- Header -->
+    <div class="page-header">
+        <h1 class="page-title">
+            <i class="fas fa-users me-2"></i>
+            Gestão de Clientes
+        </h1>
+        <button class="btn-primary-custom" onclick="openModal('modalCadastro')">
+            <i class="fas fa-plus"></i>
+            Novo Cliente
+        </button>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="fas fa-users" style="color: white; font-size: 20px;"></i>
+            </div>
+            <div class="stat-value">{{ total_clientes }}</div>
+            <div class="stat-label">Total de Clientes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <i class="fas fa-exclamation-triangle" style="color: white; font-size: 20px;"></i>
+            </div>
+            <div class="stat-value">{{ clientes_devedores }}</div>
+            <div class="stat-label">Clientes Devedores</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <i class="fas fa-dollar-sign" style="color: white; font-size: 20px;"></i>
+            </div>
+            <div class="stat-value">R$ {{ total_a_receber|floatformat:2 }}</div>
+            <div class="stat-label">Total a Receber</div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="table-container">
+        <section class="app-filter-card clientes-filter-card">
+            <div class="app-filter-grid app-filter-grid--compact clientes-filter-grid">
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-search"></i> Buscar cliente</label>
+                    <input
+                        type="text"
+                        id="searchCliente"
+                        class="app-filter-control"
+                        placeholder="Nome, código, telefone ou CPF"
+                        autocomplete="off">
+                </div>
+                <div class="app-filter-actions app-filter-actions--auto clientes-filter-actions">
+                    <button
+                        type="button"
+                        id="clearClienteSearch"
+                        class="btn-action app-filter-btn app-filter-btn-clear"
+                        aria-label="Limpar busca"
+                        title="Limpar busca"
+                        hidden>
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Table -->
+        {% if clientes %}
+        <div class="responsive-table-wrapper">
+            <table class="table responsive-table" id="tableClientes">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nome</th>
+                        <th class="hide-tablet-col">Telefone</th>
+                        <th class="hide-tablet-col">CPF</th>
+                        <th>Saldo Devedor</th>
+                        <th class="hide-tablet-col">Total Compras</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cliente in clientes %}
+                    <tr>
+                        <td data-label="Código"><strong>{{ cliente.codigo }}</strong></td>
+                        <td data-label="Nome">{{ cliente.nome }}</td>
+                        <td data-label="Telefone" class="hide-tablet-col">{{ cliente.telefone }}</td>
+                        <td data-label="CPF" class="hide-tablet-col">{{ cliente.cpf }}</td>
+                        <td data-label="Saldo Devedor">
+                            {% if cliente.saldo_devedor > 0 %}
+                            <span style="color: #dc3545; font-weight: 600;">R$ {{ cliente.saldo_devedor|floatformat:2 }}</span>
+                            {% else %}
+                            R$ 0,00
+                            {% endif %}
+                        </td>
+                        <td data-label="Total Compras" class="hide-tablet-col">R$ {{ cliente.total_compras|floatformat:2 }}</td>
+                        <td data-label="Status">
+                            {% if cliente.saldo_devedor > 0 %}
+                            <span class="badge-devedor">Devedor</span>
+                            {% else %}
+                            <span class="badge-regular">Regular</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Ações" class="td-actions">
+                            <a href="{% url 'vendas:detalhes_cliente' cliente.id %}" class="btn-action btn-view" title="Ver Detalhes" aria-label="Ver detalhes de {{ cliente.nome }}">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <button class="btn-action btn-edit" onclick="editarCliente({{ cliente.id }})" title="Editar" aria-label="Editar cliente {{ cliente.nome }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action btn-delete" onclick="deletarCliente({{ cliente.id }}, '{{ cliente.nome|escapejs }}')" title="Excluir" aria-label="Excluir cliente {{ cliente.nome }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-users"></i>
+            <h3>Nenhum cliente cadastrado</h3>
+            <p>Clique em "Novo Cliente" para adicionar o primeiro cliente.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Cadastro -->
+<div class="modal" id="modalCadastro">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Novo Cliente</h2>
+            <button class="modal-close" onclick="closeModal('modalCadastro')">&times;</button>
+        </div>
+        <form method="POST" action="{% url 'vendas:cadastrar_cliente' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="nome">Nome *</label>
+                <input type="text" id="nome" name="nome" required>
+            </div>
+            <div class="form-group">
+                <label for="telefone">Telefone</label>
+                <input type="text" id="telefone" name="telefone">
+            </div>
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" name="email">
+            </div>
+            <div class="form-group">
+                <label for="cpf">CPF</label>
+                <input type="text" id="cpf" name="cpf" maxlength="14">
+            </div>
+            <div class="form-group">
+                <label for="endereco">Endereço</label>
+                <input type="text" id="endereco" name="endereco">
+            </div>
+            <button type="submit" class="btn-primary-custom w-100 justify-content-center">
+                <i class="fas fa-save"></i>
+                Salvar Cliente
+            </button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<div
+    id="clientes-delete-config"
+    data-edit-url-template="{% url 'vendas:editar_cliente' 0 %}"
+    data-delete-url-template="{% url 'vendas:deletar_cliente' 0 %}"
+    data-csrf-token="{{ csrf_token }}"
+    hidden></div>
+<script src="{% static 'js/modules/vendas/gestao-clientes.js' %}?v=20260324-01" defer></script>
+{% endblock %}
+
+

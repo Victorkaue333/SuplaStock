@@ -1,0 +1,1 @@
+﻿# ConfiguraÃ§Ãµes do SuplaStock

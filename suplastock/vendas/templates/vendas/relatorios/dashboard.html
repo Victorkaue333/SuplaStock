@@ -1,0 +1,130 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}Relatórios - SuplaStock{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="fas fa-chart-bar me-2"></i>Dashboard de Relatórios</h4>
+        <div class="btn-group">
+            <a href="?periodo=dia" class="btn btn-sm {% if periodo == 'dia' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Dia</a>
+            <a href="?periodo=semana" class="btn btn-sm {% if periodo == 'semana' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Semana</a>
+            <a href="?periodo=mes" class="btn btn-sm {% if periodo == 'mes' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Mês</a>
+            <a href="?periodo=ano" class="btn btn-sm {% if periodo == 'ano' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Ano</a>
+        </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center p-3">
+                <h6 class="text-muted">Vendas</h6>
+                <h3>{{ total_vendas }}</h3>
+                {% if crescimento_vendas %}
+                <small class="{% if crescimento_vendas > 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ crescimento_vendas|floatformat:1 }}% vs anterior
+                </small>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center p-3">
+                <h6 class="text-muted">Receita</h6>
+                <h3>R$ {{ receita_total|floatformat:2 }}</h3>
+                {% if crescimento_receita %}
+                <small class="{% if crescimento_receita > 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ crescimento_receita|floatformat:1 }}% vs anterior
+                </small>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center p-3">
+                <h6 class="text-muted">Lucro</h6>
+                <h3 class="text-success">R$ {{ lucro_total|floatformat:2 }}</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm text-center p-3">
+                <h6 class="text-muted">Ticket Médio</h6>
+                <h3>R$ {{ ticket_medio|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Gráfico Evolução -->
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header"><h6 class="mb-0">Evolução de Vendas</h6></div>
+                <div class="card-body">
+                    <canvas id="chartEvolucao" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- Exportar -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header"><h6 class="mb-0">Exportar Relatórios</h6></div>
+                <div class="card-body">
+                    <a href="{% url 'vendas:exportar_vendas_pdf' %}?data_inicio={{ data_inicio }}&data_fim={{ data_fim }}" class="btn btn-outline-danger w-100 mb-2"><i class="fas fa-file-pdf me-1"></i>Vendas (PDF)</a>
+                    <a href="{% url 'vendas:exportar_vendas_excel' %}?data_inicio={{ data_inicio }}&data_fim={{ data_fim }}" class="btn btn-outline-success w-100 mb-2"><i class="fas fa-file-excel me-1"></i>Vendas (Excel)</a>
+                    <a href="{% url 'estoque:exportar_estoque_pdf' %}" class="btn btn-outline-danger w-100 mb-2"><i class="fas fa-file-pdf me-1"></i>Estoque (PDF)</a>
+                    <a href="{% url 'vendas:exportar_clientes_excel' %}" class="btn btn-outline-success w-100 mb-2"><i class="fas fa-file-excel me-1"></i>Clientes (Excel)</a>
+                    <hr>
+                    <a href="{% url 'estoque:relatorio_estoque' %}" class="btn btn-outline-dark w-100 mb-2"><i class="fas fa-boxes me-1"></i>Relatório de Estoque</a>
+                    <a href="{% url 'vendas:relatorio_clientes' %}" class="btn btn-outline-dark w-100 mb-2"><i class="fas fa-users me-1"></i>Relatório de Clientes</a>
+                    <a href="{% url 'financeiro:fluxo_caixa' %}" class="btn btn-outline-dark w-100"><i class="fas fa-money-bill-wave me-1"></i>Fluxo de Caixa</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Produtos -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header"><h6 class="mb-0">Produtos Mais Vendidos</h6></div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th>Produto</th><th>Qtd</th><th>Receita</th></tr></thead>
+                        <tbody>
+                            {% for p in produtos_mais_vendidos %}
+                            <tr><td>{{ p.produto__nome }}</td><td>{{ p.quantidade }}</td><td>R$ {{ p.receita|floatformat:2 }}</td></tr>
+                            {% empty %}<tr><td colspan="3" class="text-muted text-center">Sem dados.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header"><h6 class="mb-0">Lucratividade por Categoria</h6></div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th>Categoria</th><th>Receita</th><th>Lucro</th><th>Margem</th></tr></thead>
+                        <tbody>
+                            {% for c in categorias_lucro %}
+                            <tr><td>{{ c.categoria }}</td><td>R$ {{ c.receita|floatformat:2 }}</td><td>R$ {{ c.lucro|floatformat:2 }}</td><td>{{ c.margem_percentual }}%</td></tr>
+                            {% empty %}<tr><td colspan="4" class="text-muted text-center">Sem dados.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script id="relatorio-dashboard-data" type="application/json">
+{
+    "labels": {{ evolucao_labels|safe }},
+    "vendas": {{ evolucao_vendas|safe }},
+    "receita": {{ evolucao_receita|safe }}
+}
+</script>
+<script src="{% static 'js/modules/relatorios/dashboard.js' %}" defer></script>
+{% endblock %}
+

@@ -1,0 +1,23 @@
+﻿.btn-primary {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-hover));
+    border-color: transparent;
+    color: #03250f;
+    font-weight: 700;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background: linear-gradient(135deg, var(--color-primary-hover), var(--color-primary));
+    color: #03250f;
+}
+
+.btn-outline-primary {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}

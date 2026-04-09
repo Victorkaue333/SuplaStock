@@ -1,0 +1,45 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erro interno - SuplaStock</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}?v=20260323-02">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}?v=20260323-02">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}?v=20260323-02">
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}?v=20260323-02">
+    <link rel="stylesheet" href="{% static 'css/pages/errors/errors.css' %}">
+</head>
+<body class="error-page error-500">
+    <div class="error-container">
+        <div class="error-icon">⚠️</div>
+        <div class="error-code">500</div>
+        <h1 class="error-title">Erro interno do servidor</h1>
+        <p class="error-message">
+            Algo deu errado do nosso lado. Nossa equipe já foi notificada e está trabalhando para resolver o problema.
+        </p>
+        
+        <div class="buttons">
+            <a href="/" class="btn-home">
+                ← Voltar para o Início
+            </a>
+            <a href="javascript:location.reload()" class="btn-retry">
+                🔄 Tentar novamente
+            </a>
+        </div>
+        
+        <div class="info-box">
+            <h3>O que aconteceu?</h3>
+            <p>
+                Um erro inesperado ocorreu ao processar sua solicitação. 
+                Isso pode ser temporário. Por favor, tente novamente em alguns instantes.
+                Se o problema persistir, entre em contato com o suporte.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+
+
+

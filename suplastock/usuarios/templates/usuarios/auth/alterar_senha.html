@@ -1,0 +1,47 @@
+﻿{% extends "base.html" %}
+
+{% block title %}Alterar Senha - SuplaStock{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-key me-2"></i>Alterar Senha</h5>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="senha_atual" class="form-label">Senha Atual</label>
+                            <input type="password" class="form-control" id="senha_atual" name="senha_atual" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="nova_senha" class="form-label">Nova Senha</label>
+                            <input type="password" class="form-control" id="nova_senha" name="nova_senha" required minlength="8" placeholder="MÃ­nimo 8 caracteres">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirmar_senha" class="form-label">Confirmar Nova Senha</label>
+                            <input type="password" class="form-control" id="confirmar_senha" name="confirmar_senha" required minlength="8">
+                        </div>
+                        <button type="submit" class="btn btn-danger w-100">
+                            <i class="fas fa-save me-2"></i>Alterar Senha
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

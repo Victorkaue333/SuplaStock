@@ -1,0 +1,5 @@
+﻿body { background: #000; min-height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Segoe UI', sans-serif; }
+        .card-auth { background: #fff; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); max-width: 450px; width: 100%; padding: 40px; }
+        .card-auth h2 { color: #B91C1C; font-weight: 700; margin-bottom: 10px; }
+        .btn-primary { background: #B91C1C; border-color: #B91C1C; }
+        .btn-primary:hover { background: #991B1B; border-color: #991B1B; }

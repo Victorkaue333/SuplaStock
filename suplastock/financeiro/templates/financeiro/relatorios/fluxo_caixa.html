@@ -1,0 +1,326 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load financeiro_extras %}
+
+{% block title %}Fluxo de Caixa{% endblock %}
+{% block nav_fluxo_caixa %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/financeiro/fluxo-caixa.css' %}?v=20260324-06">
+{% endblock %}
+
+{% block content %}
+<div class="responsive-container fluxo-page">
+    <div class="responsive-page-header fluxo-header">
+        <div>
+            <h1 class="responsive-page-title">
+                <i class="fas fa-money-bill-wave"></i>
+                Fluxo de Caixa
+            </h1>
+            <p class="fluxo-subtitle">Controle financeiro real de entradas, saídas e saldo acumulado.</p>
+        </div>
+        <div class="fluxo-meta">
+            <span><i class="fas fa-clock"></i> Atualizado em {{ ultima_atualizacao|date:"d/m/Y H:i:s" }}</span>
+            <div class="fluxo-meta-actions">
+                <button type="button" class="btn-action btn-manual-in" data-bs-toggle="modal" data-bs-target="#modalEntradaManual">
+                    <i class="fas fa-plus-circle"></i>
+                    Entrada manual
+                </button>
+                <button type="button" class="btn-action btn-manual-out" data-bs-toggle="modal" data-bs-target="#modalSaidaManual">
+                    <i class="fas fa-minus-circle"></i>
+                    Saída manual
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="responsive-stats-grid fluxo-kpis">
+        <article class="responsive-stat-card fluxo-kpi" role="button" tabindex="0" data-kpi="entradas_periodo" aria-label="Abrir detalhes de Entradas no período">
+            <div class="fluxo-kpi-icon icon-green"><i class="fas fa-arrow-down"></i></div>
+            <div class="fluxo-kpi-content">
+                <span>Entradas no período</span>
+                <strong>{{ total_entradas_periodo|currency_br }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card fluxo-kpi" role="button" tabindex="0" data-kpi="saidas_periodo" aria-label="Abrir detalhes de Saídas no período">
+            <div class="fluxo-kpi-icon icon-red"><i class="fas fa-arrow-up"></i></div>
+            <div class="fluxo-kpi-content">
+                <span>Saídas no período</span>
+                <strong>{{ total_saidas_periodo|currency_br }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card fluxo-kpi" role="button" tabindex="0" data-kpi="saldo_atual" aria-label="Abrir detalhes de Saldo atual">
+            <div class="fluxo-kpi-icon icon-indigo"><i class="fas fa-wallet"></i></div>
+            <div class="fluxo-kpi-content">
+                <span>Saldo atual</span>
+                <strong class="{% if saldo_atual >= 0 %}is-positive{% else %}is-negative{% endif %}">{{ saldo_atual|currency_br }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card fluxo-kpi" role="button" tabindex="0" data-kpi="saldo_dia" aria-label="Abrir detalhes de Saldo do dia">
+            <div class="fluxo-kpi-icon icon-blue"><i class="fas fa-calendar-day"></i></div>
+            <div class="fluxo-kpi-content">
+                <span>Saldo do dia</span>
+                <strong class="{% if saldo_dia >= 0 %}is-positive{% else %}is-negative{% endif %}">{{ saldo_dia|currency_br }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card fluxo-kpi" role="button" tabindex="0" data-kpi="saldo_mes" aria-label="Abrir detalhes de Saldo do mês">
+            <div class="fluxo-kpi-icon icon-purple"><i class="fas fa-calendar-alt"></i></div>
+            <div class="fluxo-kpi-content">
+                <span>Saldo do mês</span>
+                <strong class="{% if saldo_mes >= 0 %}is-positive{% else %}is-negative{% endif %}">{{ saldo_mes|currency_br }}</strong>
+            </div>
+        </article>
+    </div>
+
+    <section class="app-filter-card fluxo-filter-card">
+        <form method="GET" class="app-filter-form" data-filter-form data-auto-submit="false">
+            <div class="app-filter-grid fluxo-filter-grid">
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-calendar-alt"></i> Período inicial</label>
+                    <input type="date" name="data_inicio" class="app-filter-control" value="{{ data_inicio|date:'Y-m-d' }}">
+                </div>
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-calendar-check"></i> Período final</label>
+                    <input type="date" name="data_fim" class="app-filter-control" value="{{ data_fim|date:'Y-m-d' }}">
+                </div>
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-sliders-h"></i> Tipo</label>
+                    <select name="tipo" class="app-filter-control">
+                        {% for value, label in tipos_movimentacao %}
+                        <option value="{{ value }}" {% if tipo_movimentacao == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-sort"></i> Ordenação</label>
+                    <select name="ordem" class="app-filter-control">
+                        <option value="desc" {% if ordenacao == 'desc' %}selected{% endif %}>Mais recentes primeiro</option>
+                        <option value="asc" {% if ordenacao == 'asc' %}selected{% endif %}>Mais antigas primeiro</option>
+                    </select>
+                </div>
+                <div class="app-filter-actions fluxo-filter-actions">
+                    <button type="submit" class="btn-action app-filter-btn app-filter-btn-submit btn-apply-filter">
+                        <i class="fas fa-filter"></i>
+                        Filtrar
+                    </button>
+                    <a href="{% url 'financeiro:fluxo_caixa' %}" class="btn-action app-filter-btn app-filter-btn-clear btn-clear-filter" aria-label="Limpar filtros" title="Limpar filtros">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <div class="fluxo-chart-stack">
+        <section class="responsive-card fluxo-chart-card">
+            <h3 class="fluxo-section-title">
+                <i class="fas fa-chart-column"></i>
+                Entradas e Saídas por Período
+            </h3>
+            <p class="fluxo-chart-caption">
+                Granularidade automática: <strong>{{ chart_data.granularidade_label|default:"Automática" }}</strong>
+            </p>
+            <div class="chart-container fluxo-chart-container">
+                <canvas id="chartFluxoMovimentacao"></canvas>
+            </div>
+        </section>
+
+        <section class="responsive-card fluxo-chart-card">
+            <h3 class="fluxo-section-title">
+                <i class="fas fa-chart-line"></i>
+                Saldo Acumulado
+            </h3>
+            <p class="fluxo-chart-caption">Linha de evolução do saldo no mesmo período filtrado.</p>
+            <div class="chart-container fluxo-chart-container">
+                <canvas id="chartFluxoSaldo"></canvas>
+            </div>
+        </section>
+    </div>
+
+    <section class="responsive-card fluxo-table-card">
+        <div class="fluxo-table-head">
+            <h3 class="fluxo-section-title">
+                <i class="fas fa-list"></i>
+                Movimentações
+            </h3>
+            <span>
+                Exibindo {{ movimentacoes.paginator.count }} registro(s)
+            </span>
+        </div>
+        <div class="responsive-table-wrapper">
+            <table class="responsive-table fluxo-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                        <th>Categoria</th>
+                        <th>Descrição</th>
+                        <th>Valor</th>
+                        <th>Origem</th>
+                        <th>Usuário</th>
+                        <th>Saldo acumulado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for mov in movimentacoes %}
+                    <tr>
+                        <td data-label="Data">{{ mov.data|date:"d/m/Y" }}</td>
+                        <td data-label="Tipo">
+                            <span class="tipo-badge tipo-{{ mov.tipo }}">{{ mov.tipo_display }}</span>
+                        </td>
+                        <td data-label="Categoria">{{ mov.categoria_display }}</td>
+                        <td data-label="Descrição">{{ mov.descricao }}</td>
+                        <td data-label="Valor" class="{% if mov.tipo == 'entrada' %}valor-entrada{% else %}valor-saida{% endif %}">
+                            {% if mov.tipo == 'entrada' %}+{% else %}-{% endif %}{{ mov.valor|currency_br }}
+                        </td>
+                        <td data-label="Origem">{{ mov.origem }}</td>
+                        <td data-label="Usuário">{{ mov.usuario|default:"-" }}</td>
+                        <td data-label="Saldo acumulado" class="{% if mov.saldo_acumulado >= 0 %}valor-entrada{% else %}valor-saida{% endif %}">
+                            {{ mov.saldo_acumulado|currency_br }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="fluxo-empty">Nenhuma movimentação encontrada para os filtros selecionados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if movimentacoes.has_other_pages %}
+        <div class="fluxo-pagination">
+            {% if movimentacoes.has_previous %}
+            <a href="?data_inicio={{ data_inicio|date:'Y-m-d' }}&data_fim={{ data_fim|date:'Y-m-d' }}&tipo={{ tipo_movimentacao }}&ordem={{ ordenacao }}&page={{ movimentacoes.previous_page_number }}">
+                <i class="fas fa-chevron-left"></i>
+                Anterior
+            </a>
+            {% endif %}
+            <span>Página {{ movimentacoes.number }} de {{ movimentacoes.paginator.num_pages }}</span>
+            {% if movimentacoes.has_next %}
+            <a href="?data_inicio={{ data_inicio|date:'Y-m-d' }}&data_fim={{ data_fim|date:'Y-m-d' }}&tipo={{ tipo_movimentacao }}&ordem={{ ordenacao }}&page={{ movimentacoes.next_page_number }}">
+                Próxima
+                <i class="fas fa-chevron-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </section>
+</div>
+
+<div class="modal fade" id="fluxoKpiModal" tabindex="-1" aria-labelledby="fluxoKpiModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content fluxo-kpi-modal-content">
+            <div class="modal-header fluxo-kpi-modal-header">
+                <h5 class="modal-title" id="fluxoKpiModalTitle">Detalhes do Indicador</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="fluxoKpiModalContent" class="fluxo-kpi-modal-body-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEntradaManual" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content fluxo-modal-content">
+            <div class="modal-header fluxo-modal-header entrada">
+                <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Nova entrada manual</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="POST" action="{% url 'financeiro:registrar_movimentacao_manual' %}">
+                {% csrf_token %}
+                <input type="hidden" name="tipo_movimentacao" value="entrada">
+                <input type="hidden" name="return_data_inicio" value="{{ data_inicio|date:'Y-m-d' }}">
+                <input type="hidden" name="return_data_fim" value="{{ data_fim|date:'Y-m-d' }}">
+                <input type="hidden" name="return_tipo" value="{{ tipo_movimentacao }}">
+                <input type="hidden" name="return_ordem" value="{{ ordenacao }}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Categoria</label>
+                        <select name="categoria" class="form-select" required>
+                            <option value="entrada_manual">Entrada manual</option>
+                            <option value="venda_a_vista">Venda à vista</option>
+                            <option value="pagamento_fiado">Pagamento de fiado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Descrição</label>
+                        <input type="text" name="descricao" class="form-control" maxlength="255" required>
+                    </div>
+                    <div class="grid-2-cols">
+                        <div class="form-group">
+                            <label class="form-label">Valor (R$)</label>
+                            <input type="number" name="valor" class="form-control" min="0.01" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data</label>
+                            <input type="date" name="data_movimentacao" class="form-control" value="{{ data_fim|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-action btn-clear-filter" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-action btn-manual-in">Salvar entrada</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalSaidaManual" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content fluxo-modal-content">
+            <div class="modal-header fluxo-modal-header saida">
+                <h5 class="modal-title"><i class="fas fa-minus-circle"></i> Nova saída manual</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <form method="POST" action="{% url 'financeiro:registrar_movimentacao_manual' %}">
+                {% csrf_token %}
+                <input type="hidden" name="tipo_movimentacao" value="saida">
+                <input type="hidden" name="return_data_inicio" value="{{ data_inicio|date:'Y-m-d' }}">
+                <input type="hidden" name="return_data_fim" value="{{ data_fim|date:'Y-m-d' }}">
+                <input type="hidden" name="return_tipo" value="{{ tipo_movimentacao }}">
+                <input type="hidden" name="return_ordem" value="{{ ordenacao }}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Categoria</label>
+                        <select name="categoria" class="form-select" required>
+                            <option value="despesa_operacional">Despesa operacional</option>
+                            <option value="compra_fornecedor">Compra de fornecedor</option>
+                            <option value="retirada">Retirada</option>
+                            <option value="saida_manual">Saída manual</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Descrição</label>
+                        <input type="text" name="descricao" class="form-control" maxlength="255" required>
+                    </div>
+                    <div class="grid-2-cols">
+                        <div class="form-group">
+                            <label class="form-label">Valor (R$)</label>
+                            <input type="number" name="valor" class="form-control" min="0.01" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Data</label>
+                            <input type="date" name="data_movimentacao" class="form-control" value="{{ data_fim|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-action btn-clear-filter" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn-action btn-manual-out">Salvar saída</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/base/formatters.js' %}" defer></script>
+<script id="fluxo-caixa-chart-data" type="application/json">{{ chart_data_json|safe }}</script>
+<script id="fluxo-caixa-kpi-data" type="application/json">{{ kpi_details_json|safe }}</script>
+<script src="{% static 'js/modules/financeiro/fluxo-caixa.js' %}?v=20260324-06" defer></script>
+{% endblock %}

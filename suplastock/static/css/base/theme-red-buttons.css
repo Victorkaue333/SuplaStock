@@ -1,0 +1,85 @@
+/* Theme override: padronizacao global de botoes em vermelho */
+
+:root {
+    --theme-red-1: #ff3333;
+    --theme-red-2: #c91d1d;
+    --theme-red-2-hover: #a81717;
+}
+
+/* Excecao explicita: manter verde (foto 5) */
+.btn-keep-green,
+.btn-keep-green:hover,
+.btn-keep-green:focus,
+.btn-keep-green:active {
+    background: #10B981 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Excecao explicita: manter ambar/laranja */
+.btn-keep-amber,
+.btn-keep-amber:hover,
+.btn-keep-amber:focus,
+.btn-keep-amber:active {
+    background: linear-gradient(135deg, #F59E0B 0%, #F97316 100%) !important;
+    border-color: #EA580C !important;
+    color: #111827 !important;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35) !important;
+}
+
+/* Excecao explicita: manter azul */
+.btn-keep-blue,
+.btn-keep-blue:hover,
+.btn-keep-blue:focus,
+.btn-keep-blue:active {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%) !important;
+    border-color: #1D4ED8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35) !important;
+}
+
+/* Padronizacao global de botoes (exceto botao de fechar e excecoes verde/ambar) */
+.btn:not(.btn-close):not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue),
+.btn-primary-custom:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue),
+.btn-secondary-custom:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue),
+.btn-submit:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue),
+.btn-cancel:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue),
+.responsive-btn:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue),
+.btn-primary:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue),
+.btn-success:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue),
+.btn-warning:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue),
+.btn-danger:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue) {
+    background: linear-gradient(135deg, var(--theme-red-1) 0%, var(--theme-red-2) 100%) !important;
+    border-color: var(--theme-red-2) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(201, 29, 29, 0.35) !important;
+}
+
+.btn:not(.btn-close):not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):hover,
+.btn-primary-custom:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):hover,
+.btn-secondary-custom:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):hover,
+.btn-submit:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):hover,
+.btn-cancel:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):hover,
+.responsive-btn:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):hover,
+.btn-primary:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):hover,
+.btn-success:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):hover,
+.btn-warning:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):hover,
+.btn-danger:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):hover {
+    background: linear-gradient(135deg, var(--theme-red-1) 0%, var(--theme-red-2-hover) 100%) !important;
+    border-color: var(--theme-red-2-hover) !important;
+    color: #ffffff !important;
+}
+
+.btn:not(.btn-close):not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):focus,
+.btn-primary-custom:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):focus,
+.btn-secondary-custom:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):focus,
+.btn-submit:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):focus,
+.btn-cancel:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):focus,
+.responsive-btn:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):focus,
+.btn-primary:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):focus,
+.btn-success:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):focus,
+.btn-warning:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):focus,
+.btn-danger:not(.btn-keep-green):not(.btn-keep-amber):not(.btn-keep-blue):focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 51, 51, 0.25) !important;
+}

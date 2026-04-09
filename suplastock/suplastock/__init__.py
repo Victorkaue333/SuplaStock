@@ -1,0 +1,1 @@
+﻿"""SuplaStock core Django package."""

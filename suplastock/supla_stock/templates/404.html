@@ -1,0 +1,40 @@
+﻿{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página não encontrada - SuplaStock</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}?v=20260323-02">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}?v=20260323-02">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}?v=20260323-02">
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}?v=20260323-02">
+    <link rel="stylesheet" href="{% static 'css/pages/errors/errors.css' %}">
+</head>
+<body class="error-page error-404">
+    <div class="error-container">
+        <div class="error-icon">🔍</div>
+        <div class="error-code">404</div>
+        <h1 class="error-title">Página não encontrada</h1>
+        <p class="error-message">
+            A página que você está procurando não existe ou foi movida para outro endereço.
+        </p>
+        <a href="{% url 'home' %}" class="btn-home">
+            ← Voltar para o Início
+        </a>
+        
+        <div class="suggestions">
+            <h3>Sugestões:</h3>
+            <ul>
+                <li>Verifique se o endereço está correto</li>
+                <li>Acesse a <a href="{% url 'home' %}">página inicial</a></li>
+                <li>Veja a <a href="{% url 'estoque:gestao_produtos' %}">lista de produtos</a></li>
+                <li>Acesse o <a href="{% url 'financeiro:dashboard' %}">dashboard</a></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+
+
+

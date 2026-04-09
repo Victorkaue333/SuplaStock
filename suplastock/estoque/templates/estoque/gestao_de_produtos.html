@@ -1,0 +1,880 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+{% load l10n %}
+{% load financeiro_extras %}
+
+{% block title %}Gestão de Produtos {% endblock %}
+
+{% block nav_produtos %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/estoque/gestao-produtos.css' %}?v=20260328-05">
+{% endblock %}
+
+
+{% block content %}
+<div
+    id="produtos-route-config"
+    data-edit-url-template="{% url 'estoque:editar_produto' 0 %}"
+    data-delete-url-template="{% url 'estoque:deletar_produto' 0 %}"
+    data-api-produtos-url="{% url 'estoque:api_produtos_todos' %}"
+    data-api-produto-detalhes-template="{% url 'estoque:api_produto_detalhes' 0 %}"
+    data-api-sku-preview-url="{% url 'estoque:api_sku_preview' %}"
+    hidden></div>
+<div class="responsive-container">
+    <!-- Header -->
+    <div class="responsive-page-header">
+        <div>
+            <h1 class="responsive-page-title" style="font-size: 32px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0; display: flex; align-items: center; gap: 12px;">
+                <i class="fas fa-box"></i>
+                Gestão de Produtos
+            </h1>
+            <p style="font-size: 14px; color: #64748b; margin: 0; display: flex; align-items: center; gap: 6px;">
+                <i class="fas fa-chart-line"></i>
+                Gerencie seu catálogo de suplementos
+            </p>
+        </div>
+        <div class="products-header-actions">
+            <div class="header-meta-row">
+                <div class="last-updated-badge">
+                    <i class="fas fa-clock"></i>
+                    <span>Última atualização: {{ ultima_atualizacao|date:"d/m/Y H:i:s" }}</span>
+                </div>
+                <div class="export-buttons">
+                    <a href="{% url 'estoque:exportar_estoque_pdf' %}?tipo_exportacao=completo{% if query_string %}&{{ query_string }}{% endif %}" class="export-btn">
+                        <i class="fas fa-file-pdf"></i>
+                        PDF
+                    </a>
+                    <a href="{% url 'estoque:exportar_estoque_excel' %}?tipo_exportacao=completo{% if query_string %}&{{ query_string }}{% endif %}" class="export-btn">
+                        <i class="fas fa-file-excel"></i>
+                        Excel
+                    </a>
+                    <div class="dropdown">
+                        <button class="export-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download"></i>
+                            Exportar Inteligente
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'estoque:exportar_estoque_pdf' %}?tipo_exportacao=esgotados{% if query_string %}&{{ query_string }}{% endif %}">PDF - Esgotados</a></li>
+                            <li><a class="dropdown-item" href="{% url 'estoque:exportar_estoque_pdf' %}?tipo_exportacao=baixo_estoque{% if query_string %}&{{ query_string }}{% endif %}">PDF - Estoque baixo</a></li>
+                            <li><a class="dropdown-item" href="{% url 'estoque:exportar_estoque_pdf' %}?tipo_exportacao=financeiro{% if query_string %}&{{ query_string }}{% endif %}">PDF - Financeiro</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'estoque:exportar_estoque_excel' %}?tipo_exportacao=esgotados{% if query_string %}&{{ query_string }}{% endif %}">Excel - Esgotados</a></li>
+                            <li><a class="dropdown-item" href="{% url 'estoque:exportar_estoque_excel' %}?tipo_exportacao=baixo_estoque{% if query_string %}&{{ query_string }}{% endif %}">Excel - Estoque baixo</a></li>
+                            <li><a class="dropdown-item" href="{% url 'estoque:exportar_estoque_excel' %}?tipo_exportacao=financeiro{% if query_string %}&{{ query_string }}{% endif %}">Excel - Financeiro</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-primary-custom btn-cadastrar-produto btn-keep-green responsive-btn" data-bs-toggle="modal" data-bs-target="#modalCadastrarProduto">
+                <i class="fas fa-plus"></i>
+                <span>Cadastrar Produto</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="responsive-stats-grid" style="margin-bottom: 24px;">
+        <div class="responsive-stat-card stock-filter-card" data-stock-filter="all" role="button" tabindex="0" aria-pressed="false" title="Ver todos os produtos no modal" data-bs-toggle="modal" data-bs-target="#modalResumoEstoque" onclick="window.abrirModalResumoEstoque && abrirModalResumoEstoque('all')">
+            <div class="stat-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-box" style="color: #667eea; font-size: 24px;"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label" style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Total de Produtos</div>
+                <div class="stat-value" style="font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1;">{{ total_produtos }}</div>
+            </div>
+        </div>
+        <div class="responsive-stat-card stock-filter-card" data-stock-filter="value" role="button" tabindex="0" aria-pressed="false" title="Ver valor em estoque detalhado por produto" data-bs-toggle="modal" data-bs-target="#modalResumoEstoque" onclick="window.abrirModalResumoEstoque && abrirModalResumoEstoque('value')">
+            <div class="stat-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-dollar-sign" style="color: #059669; font-size: 24px;"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label" style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Valor em Estoque</div>
+                <div class="stat-value" style="font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1;">{{ valor_estoque|currency_br }}</div>
+            </div>
+        </div>
+        <div class="responsive-stat-card stock-filter-card" data-stock-filter="critical" role="button" tabindex="0" aria-pressed="false" title="Filtrar produtos com estoque crítico" data-bs-toggle="modal" data-bs-target="#modalResumoEstoque" onclick="window.abrirModalResumoEstoque && abrirModalResumoEstoque('critical')">
+            <div class="stat-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-radiation-alt" style="color: #DC2626; font-size: 24px;"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label" style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Estoque Crítico</div>
+                <div class="stat-value" style="font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1;">{{ produtos_estoque_critico }}</div>
+            </div>
+        </div>
+        <div class="responsive-stat-card stock-filter-card" data-stock-filter="low" role="button" tabindex="0" aria-pressed="false" title="Filtrar produtos com estoque baixo" data-bs-toggle="modal" data-bs-target="#modalResumoEstoque" onclick="window.abrirModalResumoEstoque && abrirModalResumoEstoque('low')">
+            <div class="stat-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-exclamation-triangle" style="color: #F59E0B; font-size: 24px;"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label" style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Estoque Baixo</div>
+                <div class="stat-value" style="font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1;">{{ produtos_estoque_baixo }}</div>
+            </div>
+        </div>
+        <div class="responsive-stat-card stock-filter-card" data-stock-filter="out" role="button" tabindex="0" aria-pressed="false" title="Filtrar produtos esgotados" data-bs-toggle="modal" data-bs-target="#modalResumoEstoque" onclick="window.abrirModalResumoEstoque && abrirModalResumoEstoque('out')">
+            <div class="stat-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-times-circle" style="color: #DC2626; font-size: 24px;"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label" style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Esgotados</div>
+                <div class="stat-value" style="font-size: 26px; font-weight: 800; color: #1e293b; line-height: 1;">{{ produtos_esgotados }}</div>
+            </div>
+        </div>
+        <div class="responsive-stat-card" style="cursor: default;">
+            <div class="stat-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-trophy" style="color: #1D4ED8; font-size: 24px;"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label" style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Mais Vendido (Mês)</div>
+                <div style="font-size: 14px; font-weight: 700; color: #1e293b; line-height: 1.2;">
+                    {% if produto_mais_vendido %}{{ produto_mais_vendido.produto__nome }}{% else %}Sem vendas no mês{% endif %}
+                </div>
+                {% if produto_mais_vendido %}
+                <div style="font-size: 12px; color: #475569; margin-top: 4px;">{{ produto_mais_vendido.total_quantidade }} unidade(s)</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="responsive-stat-card" style="cursor: default;">
+            <div class="stat-icon" style="width: 56px; height: 56px; background: linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%); border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <i class="fas fa-coins" style="color: #047857; font-size: 24px;"></i>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label" style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Mais Lucrativo (Mês)</div>
+                <div style="font-size: 14px; font-weight: 700; color: #1e293b; line-height: 1.2;">
+                    {% if produto_mais_lucrativo %}{{ produto_mais_lucrativo.produto__nome }}{% else %}Sem vendas no mês{% endif %}
+                </div>
+                {% if produto_mais_lucrativo %}
+                <div style="font-size: 12px; color: #047857; margin-top: 4px;">{{ produto_mais_lucrativo.lucro_total|currency_br }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Bar and Filter -->
+    <section class="app-filter-card estoque-filter-card">
+        <div class="app-filter-grid app-filter-grid--compact estoque-filter-grid">
+            <div class="app-filter-field estoque-filter-search-field">
+                <label class="app-filter-label"><i class="fas fa-search"></i> Buscar</label>
+                <div class="estoque-filter-search-wrap">
+                    <i class="fas fa-search"></i>
+                    <input
+                        type="text"
+                        id="searchInput"
+                        class="app-filter-control estoque-filter-control"
+                        placeholder="Buscar por nome ou fornecedor..."
+                        autocomplete="off">
+                </div>
+            </div>
+            <div class="app-filter-field">
+                <label class="app-filter-label"><i class="fas fa-tags"></i> Categoria</label>
+                <select id="categoryFilter" class="app-filter-control">
+                    <option value="">Todas as categorias</option>
+                    {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="app-filter-field">
+                <label class="app-filter-label"><i class="fas fa-truck"></i> Fornecedor</label>
+                <input type="text" id="supplierFilter" class="app-filter-control" placeholder="Nome do fornecedor...">
+            </div>
+            <div class="app-filter-field">
+                <label class="app-filter-label"><i class="fas fa-thermometer-half"></i> Status</label>
+                <select id="statusFilter" class="app-filter-control">
+                    <option value="">Todos</option>
+                    <option value="normal">Normal</option>
+                    <option value="baixo">Baixo</option>
+                    <option value="critico">Crítico</option>
+                    <option value="esgotado">Esgotado</option>
+                </select>
+            </div>
+            <div class="app-filter-field">
+                <label class="app-filter-label"><i class="fas fa-money-bill-wave"></i> Faixa de Preço</label>
+                <select id="priceRangeFilter" class="app-filter-control">
+                    <option value="">Todas</option>
+                    <option value="ate_100">Até R$ 100</option>
+                    <option value="100_300">R$ 100 a R$ 300</option>
+                    <option value="300_600">R$ 300 a R$ 600</option>
+                    <option value="acima_600">Acima de R$ 600</option>
+                </select>
+            </div>
+            <div class="app-filter-field">
+                <label class="app-filter-label"><i class="fas fa-chart-line"></i> Ordenar</label>
+                <select id="sortFilter" class="app-filter-control">
+                    <option value="recentes">Mais recentes</option>
+                    <option value="mais_vendidos">Mais vendidos</option>
+                    <option value="lucro_desc">Maior lucro</option>
+                    <option value="lucro_asc">Menor lucro</option>
+                    <option value="preco_desc">Maior preço</option>
+                    <option value="preco_asc">Menor preço</option>
+                </select>
+            </div>
+            <div class="app-filter-field" style="display:flex; align-items:flex-end;">
+                <div style="display:flex; align-items:center; gap:8px; padding-bottom:8px;">
+                    <input type="checkbox" id="onlyOutFilter">
+                    <label for="onlyOutFilter" class="app-filter-label" style="margin:0;">Somente esgotados</label>
+                </div>
+            </div>
+            <div class="app-filter-actions app-filter-actions--auto estoque-filter-actions">
+                <button
+                    type="button"
+                    id="clearStockFilters"
+                    class="btn-action app-filter-btn app-filter-btn-clear"
+                    aria-label="Limpar filtros"
+                    title="Limpar filtros"
+                    hidden>
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Table -->
+    <div class="responsive-card" style="padding: 0; overflow: hidden;">
+        <div class="responsive-table-wrapper products-table-expanded-wrapper">
+            <table class="responsive-table products-table-expanded" style="width: 100%; border-collapse: collapse; min-width: 1560px;">
+                <thead>
+                    <tr style="background: #495057; border-bottom: 2px solid #343a40;">
+                        <th style="padding: 18px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Produto</th>
+                        <th class="hide-tablet-col" style="padding: 18px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">SKU</th>
+                        <th class="hide-tablet-col" style="padding: 18px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Categoria</th>
+                        <th class="hide-tablet-col" style="padding: 18px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Fornecedor</th>
+                        <th class="hide-tablet-col" style="padding: 18px 16px; text-align: center; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Qtd. Comprada</th>
+                        <th class="hide-tablet-col" style="padding: 18px 16px; text-align: center; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Qtd. Vendida</th>
+                        <th style="padding: 18px 16px; text-align: center; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Estoque Atual</th>
+                        <th class="hide-tablet-col" style="padding: 18px 16px; text-align: right; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Preço de Custo</th>
+                        <th style="padding: 18px 16px; text-align: right; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Preço de Venda</th>
+                        <th class="hide-tablet-col" style="padding: 18px 16px; text-align: right; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px;">Lucro</th>
+                        <th class="produto-acoes-col" style="padding: 18px 16px; text-align: center; font-size: 12px; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 0.8px; min-width: 156px;">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="productsTableBody">
+                    {% for produto in produtos %}
+                    <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s ease;" 
+                        data-search="{{ produto.nome|lower }} {{ produto.fornecedor_nome_legado|default:''|lower }} {{ produto.fornecedor.nome|default:''|lower }} {{ produto.sku|default:''|lower }}"
+                        data-category="{{ produto.categoria.id|default:'' }}"
+                        data-product-name="{{ produto.nome|escape }}"
+                        data-category-name="{{ produto.categoria.nome|default:'Sem categoria'|escape }}"
+                        data-supplier-name="{% if produto.fornecedor %}{{ produto.fornecedor.nome|escape }}{% else %}{{ produto.fornecedor_nome_legado|default:''|escape }}{% endif %}"
+                        data-status-code="{{ produto.status_estoque_codigo }}"
+                        data-stock-current="{{ produto.estoque_atual }}"
+                        data-stock-minimum="{{ produto.estoque_minimo }}"
+                        data-cost-unit="{{ produto.preco_custo_unitario|unlocalize }}"
+                        data-sale-unit="{{ produto.preco_venda_sugerido|unlocalize }}"
+                        data-profit-unit="{{ produto.lucro_unitario|unlocalize }}">
+                        <td data-label="Produto" style="padding: 16px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                {% if produto.imagem %}
+                                <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}" class="hide-mobile" style="width: 48px; height: 48px; border-radius: 12px; object-fit: cover;">
+                                {% else %}
+                                <div class="hide-mobile" style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px; flex-shrink: 0;">
+                                    {{ produto.nome|slice:":1" }}
+                                </div>
+                                {% endif %}
+                                <div>
+                                    <div style="font-size: 15px; font-weight: 600; color: #343A40; margin-bottom: 4px;">{{ produto.nome }}</div>
+                                    <div style="font-size: 12px; color: #94a3b8;">Compra: {{ produto.data_compra|date:"d/m/Y" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="SKU" class="hide-tablet-col" style="padding: 16px; font-size: 13px; font-weight: 700; color: #334155;">
+                            {{ produto.sku|default:'-' }}
+                        </td>
+                        <td data-label="Categoria" class="hide-tablet-col" style="padding: 16px;">
+                            {% if produto.categoria.nome == "Pré-Treino" %}
+                            <span style="background: #007BFF; color: #FFFFFF; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-block;">
+                                {{ produto.categoria.nome }}
+                            </span>
+                            {% elif produto.categoria.nome == "Termogênico" %}
+                            <span style="background: #FD7E14; color: #FFFFFF; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-block;">
+                                {{ produto.categoria.nome }}
+                            </span>
+                            {% else %}
+                            <span style="background: #6C757D; color: #FFFFFF; padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; display: inline-block;">
+                                {{ produto.categoria.nome|default:"Sem categoria" }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Fornecedor" class="hide-tablet-col" style="padding: 16px; font-size: 14px; color: #343A40;">
+                            {% if produto.fornecedor %}
+                            {{ produto.fornecedor.nome }}
+                            {% else %}
+                            {{ produto.fornecedor_nome_legado|default:"—" }}
+                            {% endif %}
+                        </td>
+                        <td data-label="Qtd. Comprada" class="hide-tablet-col" style="padding: 16px; text-align: center; font-size: 15px; font-weight: 600; color: #343A40;">
+                            {{ produto.quantidade_comprada }}
+                        </td>
+                        <td data-label="Qtd. Vendida" class="hide-tablet-col" style="padding: 16px; text-align: center; font-size: 15px; font-weight: 600; color: #334155;">
+                            {{ produto.total_vendido|default:0 }}
+                        </td>
+                        <td data-label="Estoque Atual" style="padding: 16px; text-align: center;">
+                            <div>
+                                <div style="font-size: 18px; font-weight: 700; {% if produto.status_estoque_codigo == 'esgotado' %}color: #DC3545;{% elif produto.status_estoque_codigo == 'critico' %}color: #DC2626;{% elif produto.status_estoque_codigo == 'baixo' %}color: #F59E0B;{% else %}color: #343A40;{% endif %}">
+                                    {{ produto.estoque_atual }}
+                                </div>
+                                <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
+                                    Mín: {{ produto.estoque_minimo }} •
+                                    {% if produto.status_estoque_codigo == 'esgotado' %}
+                                    <span class="stock-status-badge out">Esgotado</span>
+                                    {% elif produto.status_estoque_codigo == 'critico' %}
+                                    <span class="stock-status-badge critical">Crítico</span>
+                                    {% elif produto.status_estoque_codigo == 'baixo' %}
+                                    <span class="stock-status-badge low">Baixo</span>
+                                    {% else %}
+                                    <span class="stock-status-badge ok">Normal</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td data-label="Preço de Custo" class="hide-tablet-col" style="padding: 16px; text-align: right; font-size: 16px; font-weight: 700; color: #343A40;">
+                            {{ produto.preco_custo_unitario|currency_br }}
+                        </td>
+                        <td data-label="Preço de Venda" style="padding: 16px; text-align: right; font-size: 16px; font-weight: 700; color: #10B981;">
+                            {{ produto.preco_venda_sugerido|currency_br }}
+                        </td>
+                        <td data-label="Lucro" class="hide-tablet-col" style="padding: 16px; text-align: right;">
+                            <div style="font-size: 15px; font-weight: 700; color: {% if produto.lucro_unitario > 0 %}#0F766E{% elif produto.lucro_unitario < 0 %}#DC2626{% else %}#64748b{% endif %};">
+                                {{ produto.lucro_unitario|currency_br }}
+                            </div>
+                            <div style="font-size: 11px; color: #64748b;">{{ produto.margem_lucro_percentual|floatformat:2 }}%</div>
+                        </td>
+                        <td data-label="Ações" class="produto-acoes-col" style="padding: 16px; min-width: 156px;">
+                            <div class="responsive-actions actions-icon-only">
+                                <button type="button" class="btn-action view" title="Visualizar produto" aria-label="Visualizar produto" style="padding: 8px 12px;" onclick="visualizarProduto('{{ produto.id }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn-action edit" title="Editar produto" aria-label="Editar produto"
+                                    onclick="editarProduto(
+                                        '{{ produto.id }}', 
+                                        '{{ produto.nome|escapejs }}', 
+                                        '{{ produto.sku|escapejs|default_if_none:'' }}',
+                                        '{{ produto.categoria.id|default_if_none:'' }}', 
+                                        '{% if produto.fornecedor %}{{ produto.fornecedor.nome|escapejs }}{% else %}{{ produto.fornecedor_nome_legado|escapejs|default_if_none:'' }}{% endif %}', 
+                                        '{{ produto.estoque_atual }}',
+                                        '{{ produto.quantidade_comprada }}',
+                                        '{{ produto.preco_custo_unitario|unlocalize }}', 
+                                        '{{ produto.preco_venda_sugerido|unlocalize }}',
+                                        '{{ produto.data_compra|date:'Y-m-d' }}'
+                                    )"
+                                    style="padding: 8px 12px;">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                
+                                <button type="button" class="btn-action delete" title="Deletar produto" aria-label="Deletar produto" style="padding: 8px 12px;"
+                                    onclick="abrirModalExclusao({{ produto.id }}, '{{ produto.nome|escapejs }}', {{ produto.estoque_atual }}, '{{ produto.preco_custo_unitario|unlocalize }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" style="text-align: center; padding: 80px 20px;">
+                            <div style="display: inline-block; padding: 40px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 20px;">
+                                <i class="fas fa-box-open" style="font-size: 72px; color: #cbd5e1; margin-bottom: 24px; display: block;"></i>
+                                <h3 style="font-size: 20px; font-weight: 700; color: #64748b; margin: 0 0 12px 0;">Nenhum produto cadastrado</h3>
+                                <p style="font-size: 15px; color: #94a3b8; margin: 0 0 24px 0;">Comece adicionando seu primeiro produto ao estoque</p>
+                                <button class="btn-primary-custom btn-cadastrar-produto btn-keep-green responsive-btn" data-bs-toggle="modal" data-bs-target="#modalCadastrarProduto" style="margin: 0;">
+                                    <i class="fas fa-plus"></i>
+                                    <span>Cadastrar Primeiro Produto</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr id="noFilteredResultsRow" style="display: none;">
+                        <td colspan="11" style="text-align: center; padding: 40px 20px;">
+                            <div class="no-filter-results-wrap">
+                                <i class="fas fa-filter" style="font-size: 32px; color: #cbd5e1; margin-bottom: 12px; display: block;"></i>
+                                <p id="noFilteredResultsMessage" style="margin: 0; font-size: 15px; font-weight: 600; color: #64748b;">
+                                    Nenhum produto encontrado com os filtros aplicados.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% if produtos.has_other_pages %}
+        <div class="estoque-pagination">
+            {% if produtos.has_previous %}
+            <a href="?page=1{% if query_string %}&{{ query_string }}{% endif %}" class="btn-action estoque-pagination-btn" aria-label="Primeira página"><i class="fas fa-angle-double-left"></i></a>
+            <a href="?page={{ produtos.previous_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" class="btn-action estoque-pagination-btn" aria-label="Página anterior"><i class="fas fa-angle-left"></i></a>
+            {% endif %}
+            <span class="estoque-pagination-indicator">
+                Página {{ produtos.number }} de {{ produtos.paginator.num_pages }}
+            </span>
+            {% if produtos.has_next %}
+            <a href="?page={{ produtos.next_page_number }}{% if query_string %}&{{ query_string }}{% endif %}" class="btn-action estoque-pagination-btn" aria-label="Próxima página"><i class="fas fa-angle-right"></i></a>
+            <a href="?page={{ produtos.paginator.num_pages }}{% if query_string %}&{{ query_string }}{% endif %}" class="btn-action estoque-pagination-btn" aria-label="Última página"><i class="fas fa-angle-double-right"></i></a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div> <!-- Fecha responsive-container -->
+
+<!-- Modal Resumo de Estoque -->
+<div class="modal fade" id="modalResumoEstoque" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border-radius: 18px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.25);">
+            <div class="modal-header" style="background: #000000; border-radius: 18px 18px 0 0; padding: 22px 28px;">
+                <div>
+                    <h5 id="stockStatusModalTitle" class="modal-title" style="font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 4px 0;">
+                        Resumo de Estoque
+                    </h5>
+                    <p id="stockStatusModalSubtitle" style="font-size: 13px; color: rgba(255,255,255,0.85); margin: 0;">
+                        Produtos da condição selecionada
+                    </p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <!-- Campo de Pesquisa no Modal -->
+                <div style="padding: 20px 28px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <div style="position: relative;">
+                        <i class="fas fa-search" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 14px;"></i>
+                        <input 
+                            type="text" 
+                            id="stockModalSearchInput" 
+                            placeholder="Buscar produto por nome ou categoria..." 
+                            style="width: 100%; padding: 12px 16px 12px 44px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 14px; transition: all 0.3s ease;"
+                        />
+                    </div>
+                </div>
+                
+                <div id="stockStatusModalEmpty" style="display: none; text-align: center; padding: 36px 20px;">
+                    <i class="fas fa-box-open" style="font-size: 44px; color: #cbd5e1; display: block; margin-bottom: 12px;"></i>
+                    <p id="stockStatusModalEmptyMessage" style="font-size: 15px; font-weight: 600; color: #64748b; margin: 0;">
+                        Nenhum produto encontrado.
+                    </p>
+                </div>
+
+                <div id="stockStatusModalTableWrapper" class="table-responsive">
+                    <table class="table table-hover stock-modal-table" style="margin: 0;">
+                        <thead style="background: #f8fafc;">
+                            <tr>
+                                <th style="padding: 14px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.7px; color: #475569;">Produto</th>
+                                <th style="padding: 14px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.7px; color: #475569;">Categoria</th>
+                                <th style="padding: 14px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.7px; color: #475569; text-align: center;">Qtd. Atual</th>
+                                <th style="padding: 14px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.7px; color: #475569; text-align: center;">Estoque Mínimo</th>
+                                <th style="padding: 14px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.7px; color: #475569; text-align: center;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stockStatusModalBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 16px 22px; border-top: 1px solid #e2e8f0; background: #f8fafc;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detalhes do Produto -->
+<div class="modal fade produto-detalhe-modal" id="modalDetalhesProduto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable produto-detalhe-dialog">
+        <div class="modal-content produto-detalhe-content" style="border-radius: 18px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.25);">
+            <div class="modal-header produto-detalhe-header" style="background: #000000; border-radius: 18px 18px 0 0; padding: 22px 28px;">
+                <div>
+                    <h5 id="produtoDetalheTitulo" class="modal-title" style="font-size: 22px; font-weight: 800; color: #ffffff; margin: 0 0 4px 0;">
+                        Detalhes do Produto
+                    </h5>
+                    <p id="produtoDetalheSubtitulo" class="produto-detalhe-subtitulo" style="font-size: 13px; color: rgba(255,255,255,0.85); margin: 0;">
+                        Informações completas e histórico de movimentação
+                    </p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body produto-detalhe-body" style="padding: 22px 26px;">
+                <div class="row g-3 mb-3 produto-detalhe-grid">
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100 produto-detalhe-card">
+                            <h6 class="mb-2 produto-detalhe-card-title">Informações Básicas</h6>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Nome</span><span id="detalhe_nome_produto" class="produto-detalhe-value">-</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">SKU</span><span id="detalhe_sku_produto" class="produto-detalhe-value">-</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Categoria</span><span id="detalhe_categoria_produto" class="produto-detalhe-value">-</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Fornecedor</span><span id="detalhe_fornecedor_produto" class="produto-detalhe-value">-</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Cadastro</span><span id="detalhe_data_cadastro_produto" class="produto-detalhe-value">-</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Atualizado em</span><span id="detalhe_ultima_atualizacao_produto" class="produto-detalhe-value">-</span></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100 produto-detalhe-card">
+                            <h6 class="mb-2 produto-detalhe-card-title">Estoque</h6>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Quantidade comprada</span><span id="detalhe_qtd_comprada_produto" class="produto-detalhe-value">0</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Quantidade vendida</span><span id="detalhe_qtd_vendida_produto" class="produto-detalhe-value">0</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Estoque atual</span><span id="detalhe_estoque_atual_produto" class="produto-detalhe-value">0</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Estoque mínimo</span><span id="detalhe_estoque_minimo_produto" class="produto-detalhe-value">0</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Status</span><span id="detalhe_status_produto" class="stock-status-badge ok">NORMAL</span></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card p-3 h-100 produto-detalhe-card">
+                            <h6 class="mb-2 produto-detalhe-card-title">Financeiro</h6>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Preço custo</span><span id="detalhe_preco_custo_produto" class="produto-detalhe-value">R$ 0,00</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Preço venda</span><span id="detalhe_preco_venda_produto" class="produto-detalhe-value">R$ 0,00</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Lucro unitário</span><span id="detalhe_lucro_unitario_produto" class="produto-detalhe-value">R$ 0,00</span></div>
+                            <div class="produto-detalhe-item"><span class="produto-detalhe-label">Margem</span><span id="detalhe_margem_produto" class="produto-detalhe-value">0,00%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-3 produto-detalhe-card produto-detalhe-history-card">
+                    <h6 class="mb-3 produto-detalhe-card-title">Histórico de Movimentação de Estoque</h6>
+                    <div class="table-responsive produto-detalhe-history-table-wrap">
+                        <table class="table table-sm align-middle produto-detalhe-history-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th class="text-center">Quantidade</th>
+                                    <th>Responsável</th>
+                                    <th>Observação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="detalhe_movimentacoes_body">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Sem movimentações registradas.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer produto-detalhe-footer" style="padding: 16px 22px; border-top: 1px solid #e2e8f0; background: #f8fafc;">
+                <button type="button" class="btn btn-secondary produto-detalhe-close-btn" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cadastrar Produto -->
+<div class="modal fade" id="modalCadastrarProduto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 28px 36px; background: #000000; border-radius: 20px 20px 0 0;">
+                <div>
+                    <h5 class="modal-title" style="font-size: 24px; font-weight: 800; color: white; margin-bottom: 6px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-box-open"></i>
+                        Cadastrar Novo Produto
+                    </h5>
+                    <p style="font-size: 14px; color: rgba(255,255,255,0.9); margin: 0;">Preencha os dados do produto para adicionar ao estoque</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
+            </div>
+            <div class="modal-body" style="padding: 36px;">
+                <form method="POST" action="{% url 'estoque:cadastrar_produto' %}" enctype="multipart/form-data" id="formCadastrar">
+                    {% csrf_token %}
+
+                    <h6 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-info-circle" style="color: #111111;"></i>
+                        Informações Básicas
+                    </h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-tag" style="color: #111111; font-size: 12px;"></i>
+                                Nome do Produto 
+                                <span style="color: #DC2626;">*</span>
+                            </label>
+                            <input type="text" name="nome" class="form-input" placeholder="Ex: Whey Protein Isolado" required style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-barcode" style="color: #111111; font-size: 12px;"></i>
+                                SKU
+                            </label>
+                            <input type="text" name="sku" id="create_sku" class="form-input" placeholder="Será gerado automaticamente" readonly style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease; background: #f8fafc;">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-folder" style="color: #111111; font-size: 12px;"></i>
+                                Categoria
+                            </label>
+                            <select name="categoria" class="form-select" style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                                <option value="">Selecionar</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <p style="margin: 0 0 16px 2px; font-size: 12px; color: #64748b;">
+                        O SKU é sugerido automaticamente com base no nome do produto.
+                    </p>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-truck" style="color: #111111; font-size: 12px;"></i>
+                                Fornecedor
+                            </label>
+                            <input type="text" name="fornecedor" class="form-input" placeholder="Ex: Growth Supplements" style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                        </div>
+                    </div>
+
+                    <div style="height: 1px; background: linear-gradient(90deg, transparent, #e2e8f0, transparent); margin: 32px 0;"></div>
+
+                    <h6 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-calculator" style="color: #111111;"></i>
+                        Valores e Quantidades
+                    </h6>
+
+                    <div class="row g-3 mb-3 product-values-grid">
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-boxes" style="color: #111111; font-size: 12px;"></i>
+                                Quantidade
+                                <span style="color: #DC2626;">*</span>
+                            </label>
+                            <input type="number" name="quantidade_comprada" class="form-input form-input-uniform" placeholder="0" min="1" required style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-dollar-sign" style="color: #111111; font-size: 12px;"></i>
+                                Preço de Custo
+                                <span style="color: #DC2626;">*</span>
+                            </label>
+                            <div class="currency-input-wrapper" style="position: relative;">
+                                <span class="currency-prefix" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #64748b; font-weight: 600;">R$</span>
+                                <input type="number" name="preco_custo_unitario" class="form-input form-input-uniform currency-input" placeholder="0,00" step="0.01" min="0" required style="width: 100%; padding: 14px 18px 14px 48px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-money-bill-wave" style="color: #10B981; font-size: 12px;"></i>
+                                Preço de Venda
+                                <span style="color: #DC2626;">*</span>
+                            </label>
+                            <div class="currency-input-wrapper" style="position: relative;">
+                                <span class="currency-prefix" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #64748b; font-weight: 600;">R$</span>
+                                <input type="number" name="preco_venda_sugerido" class="form-input form-input-uniform currency-input" placeholder="0,00" step="0.01" min="0" required style="width: 100%; padding: 14px 18px 14px 48px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-calendar" style="color: #111111; font-size: 12px;"></i>
+                                Data da Compra
+                                <span style="color: #DC2626;">*</span>
+                            </label>
+                            <input type="date" name="data_compra" class="form-input form-input-uniform" required style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 24px 36px; background: #f8fafc; border-radius: 0 0 20px 20px;">
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal" style="padding: 14px 28px; border-radius: 12px; border: 2px solid #e2e8f0; background: white; color: #64748b; font-weight: 700; font-size: 14px; transition: all 0.3s ease;">
+                    <i class="fas fa-times" style="margin-right: 6px;"></i>
+                    Cancelar
+                </button>
+                <button type="submit" form="formCadastrar" class="btn-submit" style="padding: 14px 32px; border-radius: 12px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">
+                    <i class="fas fa-save" style="margin-right: 8px;"></i>
+                    Salvar Produto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Produto -->
+<div class="modal fade" id="modalEditarProduto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 28px 36px; background: #000000; border-radius: 20px 20px 0 0;">
+                <div>
+                    <h5 class="modal-title" style="font-size: 24px; font-weight: 800; color: white; margin-bottom: 6px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-edit"></i>
+                        Editar Produto
+                    </h5>
+                    <p style="font-size: 14px; color: rgba(255,255,255,0.9); margin: 0;">Atualize as informações do produto</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
+            </div>
+            <div class="modal-body" style="padding: 36px;">
+                <form method="POST" id="formEditar">
+                    {% csrf_token %}
+
+                    <h6 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-info-circle" style="color: #111111;"></i>
+                        Informações Básicas
+                    </h6>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-tag" style="color: #111111; font-size: 12px;"></i>
+                                Nome do Produto 
+                                <span style="color: #DC2626;">*</span>
+                            </label>
+                            <input type="text" name="nome" id="edit_nome" class="form-input" required style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-barcode" style="color: #111111; font-size: 12px;"></i>
+                                SKU
+                            </label>
+                            <input type="text" name="sku" id="edit_sku" class="form-input" style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-folder" style="color: #111111; font-size: 12px;"></i>
+                                Categoria
+                            </label>
+                            <select name="categoria" id="edit_categoria" class="form-select" style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                                <option value="">Selecionar</option>
+                                {% for categoria in categorias %}
+                                <option value="{{ categoria.id }}">{{ categoria.nome }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-12">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-truck" style="color: #111111; font-size: 12px;"></i>
+                                Fornecedor
+                            </label>
+                            <input type="text" name="fornecedor" id="edit_fornecedor" class="form-input" style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                        </div>
+                    </div>
+
+                    <div style="height: 1px; background: linear-gradient(90deg, transparent, #e2e8f0, transparent); margin: 32px 0;"></div>
+
+                    <h6 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 24px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-calculator" style="color: #111111;"></i>
+                        Valores e Quantidades
+                    </h6>
+
+                    <div class="row g-3 mb-3 product-values-grid">
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-plus-circle" style="color: #111111; font-size: 12px;"></i>
+                                Quantidade a adicionar
+                            </label>
+                            <input type="number" name="quantidade_adicionada" id="edit_quantidade_adicionada" class="form-input form-input-uniform" min="0" value="0" style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                            <small id="edit_quantidade_info" style="display:block; margin-top:6px; font-size: 12px; color:#64748b;">Estoque atual: 0 • Quantidade comprada: 0</small>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-dollar-sign" style="color: #111111; font-size: 12px;"></i>
+                                Preço de Custo
+                                <span style="color: #DC2626;">*</span>
+                            </label>
+                            <div class="currency-input-wrapper" style="position: relative;">
+                                <span class="currency-prefix" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #64748b; font-weight: 600;">R$</span>
+                                <input type="number" name="preco_custo_unitario" id="edit_preco" class="form-input form-input-uniform currency-input" step="0.01" min="0" required style="width: 100%; padding: 14px 18px 14px 48px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-money-bill-wave" style="color: #10B981; font-size: 12px;"></i>
+                                Preço de Venda
+                                <span style="color: #DC2626;">*</span>
+                            </label>
+                            <div class="currency-input-wrapper" style="position: relative;">
+                                <span class="currency-prefix" style="position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #64748b; font-weight: 600;">R$</span>
+                                <input type="number" name="preco_venda_sugerido" id="edit_preco_venda" class="form-input form-input-uniform currency-input" step="0.01" min="0" required style="width: 100%; padding: 14px 18px 14px 48px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size: 14px; font-weight: 600; color: #334155; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-calendar" style="color: #111111; font-size: 12px;"></i>
+                                Data da Compra
+                                <span style="color: #DC2626;">*</span>
+                            </label>
+                            <input type="date" name="data_compra" id="edit_data" class="form-input form-input-uniform" required style="width: 100%; padding: 14px 18px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 14px; transition: all 0.3s ease;">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 24px 36px; background: #f8fafc; border-radius: 0 0 20px 20px;">
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal" style="padding: 14px 28px; border-radius: 12px; border: 2px solid #e2e8f0; background: white; color: #64748b; font-weight: 700; font-size: 14px; transition: all 0.3s ease;">
+                    <i class="fas fa-times" style="margin-right: 6px;"></i>
+                    Cancelar
+                </button>
+                <button type="submit" form="formEditar" class="btn-submit" style="padding: 14px 32px; border-radius: 12px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-weight: 700; font-size: 14px; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); transition: all 0.3s ease;">
+                    <i class="fas fa-save" style="margin-right: 8px;"></i>
+                    Atualizar Produto
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="modalConfirmarExclusaoProduto" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 20px; border: none; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 24px 32px; background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%); border-radius: 20px 20px 0 0;">
+                <div>
+                    <h5 class="modal-title" style="font-size: 22px; font-weight: 800; color: white; margin-bottom: 6px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Confirmar Exclusão
+                    </h5>
+                    <p style="font-size: 13px; color: rgba(255,255,255,0.9); margin: 0;">Esta ação não pode ser desfeita</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="filter: brightness(0) invert(1);"></button>
+            </div>
+            <div class="modal-body" style="padding: 32px;">
+                <!-- Ícone de Alerta -->
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="width: 80px; height: 80px; margin: 0 auto; background: #FEE2E2; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-box-open" style="font-size: 36px; color: #DC2626;"></i>
+                    </div>
+                </div>
+
+                <!-- Mensagem de Confirmação -->
+                <div style="text-align: center; margin-bottom: 24px;">
+                    <h6 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 12px;">
+                        Tem certeza que deseja deletar este produto?
+                    </h6>
+                    <p style="font-size: 14px; color: #64748b; line-height: 1.6;">
+                        O produto será removido permanentemente do estoque.<br>
+                        Esta ação é irreversível.
+                    </p>
+                </div>
+
+                <!-- Informações do Produto -->
+                <div style="background: #F8FAFC; padding: 20px; border-radius: 12px; border-left: 4px solid #DC2626;">
+                    <div style="margin-bottom: 12px;">
+                        <div style="font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 4px;">PRODUTO</div>
+                        <div id="modal_excluir_produto_nome" style="font-size: 16px; font-weight: 700; color: #1e293b;">-</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+                        <div>
+                            <div style="font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 4px;">ESTOQUE</div>
+                            <div id="modal_excluir_produto_estoque" style="font-size: 14px; font-weight: 700; color: #DC2626;">-</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 4px;">VALOR TOTAL</div>
+                            <div id="modal_excluir_produto_valor" style="font-size: 14px; font-weight: 700; color: #DC2626;">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="modal_excluir_produto_id" value="">
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 20px 32px; background: #f8fafc; border-radius: 0 0 20px 20px; display: flex; gap: 12px;">
+                <button type="button" class="btn" data-bs-dismiss="modal" style="flex: 1; padding: 12px 24px; border-radius: 10px; border: 2px solid #e2e8f0; background: white; color: #64748b; font-weight: 700; font-size: 14px;">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <button type="button" onclick="confirmarExclusaoProduto()" class="btn" style="flex: 1; padding: 12px 24px; border-radius: 10px; background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%); color: white; border: none; font-weight: 700; font-size: 14px; transition: all 0.3s;">
+                    <i class="fas fa-trash-alt me-2"></i>Sim, Deletar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script src="{% static 'js/modules/estoque/gestao-produtos.js' %}?v=20260328-03" defer></script>
+{% endblock %}

@@ -1,0 +1,261 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/vendas/emitir-nota-fiscal.css' %}?v=20260324-02">
+{% endblock %}
+{% block content %}
+
+<div class="responsive-container">
+    <!-- Header -->
+    <div class="responsive-page-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; gap: 24px; flex-wrap: wrap;">
+        <div>
+            <h1 class="responsive-page-title" style="font-size: 32px; font-weight: 700; color: #1e293b; margin: 0 0 4px 0;">Emissão de Nota Fiscal</h1>
+            <p style="color: #64748b; font-size: 14px; margin: 0;">
+                <i class="fas fa-file-invoice" style="color: #e11d48;"></i>
+                Selecione uma venda para emitir a nota fiscal. Apenas vendas já registradas podem ser emitidas.
+            </p>
+        </div>
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="{% url 'vendas:gestao_vendas' %}" class="btn btn-outline-secondary responsive-btn" style="min-width:160px;">
+                <i class="fas fa-arrow-left"></i>
+                <span>Voltar para Vendas</span>
+            </a>
+            <button type="button" class="btn btn-outline-danger responsive-btn" style="min-width:160px;" onclick="abrirModalExportacaoPDF()">
+                <i class="fas fa-file-pdf me-2"></i> Exportar PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <section class="app-filter-card filter-section" style="margin-bottom: 24px;">
+        <form method="get"
+              class="app-filter-form"
+              autocomplete="off"
+              data-filter-form
+              data-auto-submit="true"
+              data-filter-debounce="420">
+            <div class="app-filter-grid app-filter-grid--compact emitir-nota-filter-grid">
+                <div class="app-filter-field">
+                    <label for="cliente" class="app-filter-label">Cliente</label>
+                    <input type="text" id="cliente" name="cliente" class="app-filter-control" placeholder="Todos" value="{{ cliente_nome }}">
+                </div>
+                <div class="app-filter-field">
+                    <label for="produto" class="app-filter-label">Produto</label>
+                    <input type="text" id="produto" name="produto" class="app-filter-control" placeholder="Todos" value="{{ produto_nome }}">
+                </div>
+                <div class="app-filter-field">
+                    <label for="data" class="app-filter-label">Data</label>
+                    <input type="date" id="data" name="data" class="app-filter-control" value="{{ data_venda }}">
+                </div>
+                {% if cliente_nome or produto_nome or data_venda %}
+                <div class="app-filter-actions app-filter-actions--auto emitir-nota-filter-actions">
+                    <a href="{% url 'vendas:emitir_nota_fiscal' %}" class="btn-action app-filter-btn app-filter-btn-clear" aria-label="Limpar filtros" title="Limpar filtros">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </form>
+    </section>
+
+    <!-- Tabela -->
+<div class="modal fade" id="modalExportacaoPDF" tabindex="-1" aria-labelledby="modalExportacaoPDFLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalExportacaoPDFLabel">Exportar PDF</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p>Escolha o que deseja exportar:</p>
+                <div class="d-flex flex-column gap-2 mt-3">
+                    <button type="button" class="btn btn-primary w-100" onclick="exportTableToPDF(); fecharModalExportacaoPDF();"><i class="fas fa-file-pdf"></i> Exportar PDF das Vendas Filtradas</button>
+                    <button type="button" class="btn btn-outline-secondary w-100" onclick="exportarPDFTodasVendas(); fecharModalExportacaoPDF();"><i class="fas fa-file-pdf"></i> Exportar PDF de Todas as Vendas</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="responsive-table">
+    <form id="formAcoesMassa" method="post" action="">
+        {% csrf_token %}
+        <div class="table-toolbar">
+            <input type="checkbox" id="checkAll" style="margin-right: 6px;"> 
+            <label for="checkAll">Selecionar todos</label>
+            
+            <button type="submit" class="btn btn-outline-primary btn-sm" id="btnEmitirNotasMassa">
+                <i class="fas fa-file-signature"></i> Emitir Notas Selecionadas
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="exportarPDFEmMassa()">
+                <i class="fas fa-file-pdf"></i> Exportar PDF Selecionados
+            </button>
+        </div>
+        
+        <table class="tabela-notas responsive-table" aria-label="Tabela de vendas para emissão de nota fiscal">
+            <thead>
+                <tr>
+                    <th class="text-center hide-mobile"><input type="checkbox" id="checkAllHead" tabindex="0" aria-label="Selecionar todos"></th>
+                    <th>Data da Venda</th>
+                    <th>Cliente</th>
+                    <th class="hide-tablet-col">Produto</th>
+                    <th class="text-center hide-tablet-col">Quantidade</th>
+                    <th class="text-right hide-tablet-col">Valor Unitário</th>
+                    <th class="text-right">Valor Total</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for nota in notas %}
+                <tr>
+                    <td class="text-center hide-mobile" data-label="Selecionar">
+                        <input type="checkbox" class="checkNota" name="notas_selecionadas" value="{{ nota.transacao_id }}" data-cliente="{{ nota.cliente_nome|escapejs }}" data-produto="{{ nota.produto_nome|escapejs }}" data-quantidade="{{ nota.quantidade }}" data-valor_unitario="{{ nota.valor_unitario }}" data-valor_total="{{ nota.valor_total }}" tabindex="0" aria-label="Selecionar venda {{ nota.transacao_id }}">
+                    </td>
+                    <td data-label="Data" style="font-weight: 700;">{{ nota.data_venda|date:'d/m/Y' }}</td>
+                    <td data-label="Cliente">{{ nota.cliente_nome }}</td>
+                    <td data-label="Produto" class="hide-tablet-col">{{ nota.produto_nome }}</td>
+                    <td data-label="Qtd" class="quantidade hide-tablet-col">{{ nota.quantidade }}</td>
+                    <td data-label="Valor Unit." class="valor hide-tablet-col">R$ {{ nota.valor_unitario|floatformat:2 }}</td>
+                    <td data-label="Valor Total" class="valor-total">R$ {{ nota.valor_total|floatformat:2 }}</td>
+                    <td data-label="Status" class="text-center">
+                        {% if nota.status_nota == 'emitida' %}
+                            <span class="badge bg-success">Emitida</span>
+                        {% elif nota.status_nota == 'pendente' %}
+                            <span class="badge bg-warning text-dark">Pendente</span>
+                        {% elif nota.status_nota == 'cancelada' %}
+                            <span class="badge bg-danger">Cancelada</span>
+                        {% else %}
+                            <span class="badge bg-secondary">-</span>
+                        {% endif %}
+                    </td>
+                    
+                    <td class="acoes">
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light dropdown-toggle" type="button" id="dropdownMenuButton-{{ nota.transacao_id }}" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Ações para venda {{ nota.transacao_id }}">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton-{{ nota.transacao_id }}">
+                                <li>
+                                    <button type="button" class="dropdown-item" onclick="abrirModalAcaoNota('{{ nota.transacao_id }}','{{ nota.produto_id }}','{{ nota.cliente_id }}','{{ nota.quantidade }}','{{ nota.valor_unitario }}','{{ nota.valor_total }}','{{ nota.cliente_nome|escapejs }}','{{ nota.produto_nome|escapejs }}')">
+                                        <i class="fas fa-file-invoice me-2"></i>Emitir Nota
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" class="dropdown-item" onclick="abrirModalDetalhesVenda('{{ nota.transacao_id }}','{{ nota.data_venda|date:'d/m/Y' }}','{{ nota.cliente_nome|escapejs }}','{{ nota.produto_nome|escapejs }}','{{ nota.quantidade }}','{{ nota.valor_unitario }}','{{ nota.valor_total }}')">
+                                        <i class="fas fa-search me-2"></i>Detalhes
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" class="dropdown-item" onclick="previewPDFVenda('{{ nota.cliente_nome|escapejs }}','{{ nota.produto_nome|escapejs }}','{{ nota.quantidade }}','{{ nota.valor_unitario }}','{{ nota.valor_total }}','{{ nota.data_venda|date:'d/m/Y' }}')">
+                                        <i class="fas fa-eye me-2"></i>Preview PDF
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" class="dropdown-item" onclick="abrirModalHistorico('{{ nota.transacao_id }}')">
+                                        <i class="fas fa-history me-2"></i>Histórico
+                                    </button>
+                                </li>
+                                
+                                {% if nota.status_nota == 'emitida' %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button type="button" class="dropdown-item" onclick="reenviarNota('{{ nota.transacao_id }}')">
+                                        <i class="fas fa-redo me-2"></i>Reenviar Nota
+                                    </button>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="9" style="text-align: center; color: #64748b; padding: 32px 0;">Nenhuma venda encontrada para emissão de nota fiscal.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </form>
+</div> <div class="modal fade" id="modalHistoricoNota" tabindex="-1" aria-labelledby="modalHistoricoNotaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalHistoricoNotaLabel">Histórico da Nota Fiscal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <ul id="listaHistoricoNota" style="padding-left: 18px;">
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDetalhesVenda" tabindex="-1" aria-labelledby="modalDetalhesVendaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDetalhesVendaLabel">Detalhes da Venda</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>ID Transação:</strong> <span id="detalheTransacaoId"></span></p>
+                <p><strong>Data:</strong> <span id="detalheData"></span></p>
+                <p><strong>Cliente:</strong> <span id="detalheCliente"></span></p>
+                <p><strong>Produto:</strong> <span id="detalheProduto"></span></p>
+                <p><strong>Quantidade:</strong> <span id="detalheQuantidade"></span></p>
+                <p><strong>Valor Unitário:</strong> R$ <span id="detalheValorUnitario"></span></p>
+                <p><strong>Valor Total:</strong> R$ <span id="detalheValorTotal"></span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalPreviewPDF" tabindex="-1" aria-labelledby="modalPreviewPDFLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalPreviewPDFLabel">Preview da Nota Fiscal (PDF)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body" style="min-height: 500px;">
+                <iframe id="iframePreviewPDF" style="width:100%; height:480px; border:none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="modalAcaoNota" tabindex="-1" aria-labelledby="modalAcaoNotaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalAcaoNotaLabel">Ação para Nota Fiscal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Cliente:</strong> <span id="modalCliente"></span></p>
+                <p><strong>Produto:</strong> <span id="modalProduto"></span></p>
+                <p><strong>Quantidade:</strong> <span id="modalQuantidade"></span></p>
+                <p><strong>Valor Unitário:</strong> R$ <span id="modalValorUnitario"></span></p>
+                <p><strong>Valor Total:</strong> R$ <span id="modalValorTotal"></span></p>
+                <div class="d-flex flex-column gap-2 mt-3">
+                    <form id="formEmitirNota" method="post" action="">
+                        {% csrf_token %}
+                        <input type="hidden" name="transacao_id" id="inputTransacaoId">
+                        <input type="hidden" name="produto_id" id="inputProdutoId">
+                        <input type="hidden" name="cliente_id" id="inputClienteId">
+                        <input type="hidden" name="quantidade" id="inputQuantidade">
+                        <input type="hidden" name="valor_unitario" id="inputValorUnitario">
+                        <input type="hidden" name="valor_total" id="inputValorTotal">
+                        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-file-signature"></i> Emitir Nota Fiscal</button>
+                    </form>
+                    <button type="button" class="btn btn-outline-danger w-100" onclick="exportarPDFVendaModal()"><i class="fas fa-file-pdf"></i> Exportar PDF da Venda</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="{% static 'js/modules/vendas/emitir-nota-fiscal.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load financeiro_extras %}
+
+{% block title %}Relatórios Gerenciais{% endblock %}
+{% block nav_relatorios %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/financeiro/relatorios-gerenciais.css' %}?v=20260324-06">
+{% endblock %}
+
+{% block content %}
+<div class="responsive-container relatorios-page">
+    <div class="responsive-page-header relatorios-header">
+        <div>
+            <h1 class="responsive-page-title">
+                <i class="fas fa-chart-bar"></i>
+                Relatórios Gerenciais
+            </h1>
+            <p class="relatorios-subtitle">Visão analítica para decisão, rentabilidade e cobrança.</p>
+        </div>
+        <div class="relatorios-header-meta">
+            <div class="relatorios-last-update">
+                <i class="fas fa-clock"></i>
+                <span>Atualizado em {{ ultima_atualizacao|date:"d/m/Y H:i:s" }}</span>
+            </div>
+            <div class="relatorios-quick-actions">
+                <a href="{% url 'financeiro:inadimplencia' %}" class="relatorios-chip">
+                    <i class="fas fa-user-clock"></i>
+                    Inadimplência
+                </a>
+                <a href="{% url 'financeiro:alertas_notificacoes' %}" class="relatorios-chip">
+                    <i class="fas fa-bell"></i>
+                    Alertas
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <section class="app-filter-card relatorios-filter-card">
+        <form method="GET" class="app-filter-form" data-filter-form data-auto-submit="false">
+            <div class="app-filter-grid relatorios-filter-grid">
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-calendar-alt"></i> Período inicial</label>
+                    <input type="date" name="data_inicio" class="app-filter-control" value="{{ data_inicio|date:'Y-m-d' }}">
+                </div>
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-calendar-check"></i> Período final</label>
+                    <input type="date" name="data_fim" class="app-filter-control" value="{{ data_fim|date:'Y-m-d' }}">
+                </div>
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-sliders-h"></i> Tipo de relatório</label>
+                    <select name="tipo" class="app-filter-control">
+                        {% for value, label in tipos_relatorio %}
+                        <option value="{{ value }}" {% if tipo_relatorio == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="app-filter-actions relatorios-filter-actions">
+                    <button type="submit" class="btn-action app-filter-btn app-filter-btn-submit btn-apply-filter">
+                        <i class="fas fa-filter"></i>
+                        Filtrar
+                    </button>
+                    <a href="{% url 'financeiro:relatorios_gerenciais' %}" class="btn-action app-filter-btn app-filter-btn-clear btn-clear-filter" aria-label="Limpar filtros" title="Limpar filtros">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+            </div>
+        </form>
+    </section>
+
+    <div class="responsive-stats-grid relatorios-kpis">
+        <article class="responsive-stat-card relatorio-kpi-card" role="button" tabindex="0" data-kpi="total_vendas" aria-label="Abrir detalhes de Total de vendas">
+            <div class="kpi-icon kpi-blue"><i class="fas fa-coins"></i></div>
+            <div class="kpi-content">
+                <span class="kpi-label">Total de vendas</span>
+                <strong class="kpi-value">{{ total_vendas|currency_br }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card relatorio-kpi-card" role="button" tabindex="0" data-kpi="total_recebido" aria-label="Abrir detalhes de Total recebido">
+            <div class="kpi-icon kpi-green"><i class="fas fa-hand-holding-usd"></i></div>
+            <div class="kpi-content">
+                <span class="kpi-label">Total recebido</span>
+                <strong class="kpi-value">{{ total_recebido|currency_br }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card relatorio-kpi-card" role="button" tabindex="0" data-kpi="lucro_estimado" aria-label="Abrir detalhes de Lucro estimado">
+            <div class="kpi-icon kpi-indigo"><i class="fas fa-chart-line"></i></div>
+            <div class="kpi-content">
+                <span class="kpi-label">Lucro estimado</span>
+                <strong class="kpi-value">{{ lucro_estimado|currency_br }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card relatorio-kpi-card" role="button" tabindex="0" data-kpi="quantidade_vendas" aria-label="Abrir detalhes de Quantidade de vendas">
+            <div class="kpi-icon kpi-orange"><i class="fas fa-receipt"></i></div>
+            <div class="kpi-content">
+                <span class="kpi-label">Quantidade de vendas</span>
+                <strong class="kpi-value">{{ quantidade_vendas }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card relatorio-kpi-card" role="button" tabindex="0" data-kpi="ticket_medio" aria-label="Abrir detalhes de Ticket médio">
+            <div class="kpi-icon kpi-purple"><i class="fas fa-tag"></i></div>
+            <div class="kpi-content">
+                <span class="kpi-label">Ticket médio</span>
+                <strong class="kpi-value">{{ ticket_medio|currency_br }}</strong>
+            </div>
+        </article>
+    </div>
+
+    <div class="relatorios-analysis-grid">
+        <section class="responsive-card relatorios-chart-card">
+            <h3 class="analysis-title">
+                <i class="fas fa-wave-square"></i>
+                Evolução de Vendas e Lucro
+            </h3>
+            <p class="relatorios-chart-caption">
+                Granularidade automática: <strong>{{ chart_granularidade_label|default:"Automática" }}</strong>
+            </p>
+            <div class="relatorios-chart-stack">
+                <div class="relatorios-chart-block">
+                    <h4 class="relatorios-chart-subtitle">Vendas por período</h4>
+                    <div class="chart-container relatorios-chart-container">
+                        <canvas id="chartRelatoriosVendas"></canvas>
+                    </div>
+                </div>
+                <div class="relatorios-chart-block">
+                    <h4 class="relatorios-chart-subtitle">Lucro por período</h4>
+                    <div class="chart-container relatorios-chart-container">
+                        <canvas id="chartRelatoriosLucro"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="responsive-card relatorios-side-card">
+            <h3 class="analysis-title">
+                <i class="fas fa-exclamation-circle"></i>
+                Clientes Inadimplentes
+            </h3>
+            <div class="analysis-list">
+                {% for item in clientes_inadimplentes|slice:":6" %}
+                <article class="analysis-list-item">
+                    <div>
+                        <strong>{{ item.cliente_nome }}</strong>
+                        <p>{{ item.dias_atraso }} dia(s) em atraso</p>
+                    </div>
+                    <span class="analysis-highlight">{{ item.valor_em_aberto|currency_br }}</span>
+                </article>
+                {% empty %}
+                <p class="analysis-empty">Nenhum cliente inadimplente no momento.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <div class="relatorios-analysis-grid relatorios-secondary-grid">
+        <section class="responsive-card">
+            <h3 class="analysis-title">
+                <i class="fas fa-box-open"></i>
+                Produtos Mais Vendidos
+            </h3>
+            <div class="analysis-list">
+                {% for item in produtos_mais_vendidos %}
+                <article class="analysis-list-item">
+                    <div>
+                        <strong>{{ item.produto__nome }}</strong>
+                        <p>{{ item.quantidade }} unidade(s)</p>
+                    </div>
+                    <span class="analysis-highlight">{{ item.receita|currency_br }}</span>
+                </article>
+                {% empty %}
+                <p class="analysis-empty">Sem dados para o período selecionado.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="responsive-card">
+            <h3 class="analysis-title">
+                <i class="fas fa-users"></i>
+                Clientes Que Mais Compram
+            </h3>
+            <div class="analysis-list">
+                {% for item in clientes_mais_compram %}
+                <article class="analysis-list-item">
+                    <div>
+                        <strong>{{ item.cliente__nome }}</strong>
+                        <p>{{ item.quantidade_vendas }} compra(s)</p>
+                    </div>
+                    <span class="analysis-highlight">{{ item.total_comprado|currency_br }}</span>
+                </article>
+                {% empty %}
+                <p class="analysis-empty">Sem clientes com compras no período.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <section class="responsive-card relatorios-table-card">
+        <div class="relatorios-table-head">
+            <h3 class="analysis-title">
+                <i class="fas fa-table"></i>
+                Tabela de Apoio por Cliente
+            </h3>
+            <a href="{% url 'financeiro:inadimplencia' %}" class="relatorios-head-link">
+                Ver inadimplência completa
+                <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+        <div class="responsive-table-wrapper">
+            <table class="responsive-table relatorios-table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Total Comprado</th>
+                        <th>Total Pago</th>
+                        <th>Saldo em Aberto</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in tabela_clientes %}
+                    <tr>
+                        <td data-label="Cliente">
+                            <strong>{{ item.cliente_nome }}</strong>
+                            {% if item.cliente_codigo %}
+                            <small>#{{ item.cliente_codigo }}</small>
+                            {% endif %}
+                        </td>
+                        <td data-label="Total Comprado">{{ item.total_comprado|currency_br }}</td>
+                        <td data-label="Total Pago">{{ item.total_pago|currency_br }}</td>
+                        <td data-label="Saldo em Aberto" class="{% if item.saldo_em_aberto > 0 %}is-negative{% else %}is-positive{% endif %}">
+                            {{ item.saldo_em_aberto|currency_br }}
+                        </td>
+                        <td data-label="Ações">
+                            <div class="table-actions">
+                                <a href="{% url 'financeiro:contas_receber' %}?cliente={{ item.cliente_nome|urlencode }}" class="btn-action btn-table-action">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                    Extrato
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="analysis-empty">Sem clientes para exibir no período informado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<div class="modal fade" id="relatoriosKpiModal" tabindex="-1" aria-labelledby="relatoriosKpiModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content relatorios-kpi-modal-content">
+            <div class="modal-header relatorios-kpi-modal-header">
+                <h5 class="modal-title" id="relatoriosKpiModalTitle">Detalhes do Indicador</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="relatoriosKpiModalContent" class="kpi-modal-body-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/base/formatters.js' %}" defer></script>
+<script id="relatorios-gerenciais-chart-data" type="application/json">{{ chart_data_json|safe }}</script>
+<script id="relatorios-gerenciais-kpi-data" type="application/json">{{ kpi_details_json|safe }}</script>
+<script src="{% static 'js/modules/financeiro/relatorios-gerenciais.js' %}?v=20260324-05" defer></script>
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load financeiro_extras %}
+
+{% block title %}Alertas e Notificações{% endblock %}
+{% block nav_alertas %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/financeiro/alertas-notificacoes.css' %}?v=20260324-05">
+{% endblock %}
+
+{% block content %}
+<div class="responsive-container alertas-page">
+    <div class="responsive-page-header alertas-header">
+        <div>
+            <h1 class="responsive-page-title">
+                <i class="fas fa-bell"></i>
+                Alertas e Notificações
+            </h1>
+            <p class="alertas-subtitle">Central de ação rápida para pendências financeiras e de estoque.</p>
+        </div>
+        <div class="alertas-meta">
+            <span><i class="fas fa-clock"></i> Atualizado em {{ ultima_atualizacao|date:"d/m/Y H:i:s" }}</span>
+        </div>
+    </div>
+
+    <div class="responsive-stats-grid alertas-kpis">
+        <article class="responsive-stat-card alerta-kpi" role="button" tabindex="0" data-kpi="total_alertas" aria-label="Abrir detalhes de Total de alertas">
+            <div class="alerta-kpi-icon kpi-red"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="alerta-kpi-content">
+                <span>Total de alertas</span>
+                <strong>{{ total_alertas }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card alerta-kpi" role="button" tabindex="0" data-kpi="alertas_criticos" aria-label="Abrir detalhes de Alertas críticos">
+            <div class="alerta-kpi-icon kpi-orange"><i class="fas fa-radiation"></i></div>
+            <div class="alerta-kpi-content">
+                <span>Alertas críticos</span>
+                <strong>{{ alertas_criticos }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card alerta-kpi" role="button" tabindex="0" data-kpi="alertas_hoje" aria-label="Abrir detalhes de Ações para hoje">
+            <div class="alerta-kpi-icon kpi-blue"><i class="fas fa-calendar-day"></i></div>
+            <div class="alerta-kpi-content">
+                <span>Ações para hoje</span>
+                <strong>{{ alertas_hoje }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card alerta-kpi" role="button" tabindex="0" data-kpi="total_alertas_estoque" aria-label="Abrir detalhes de Alertas de estoque">
+            <div class="alerta-kpi-icon kpi-indigo"><i class="fas fa-box-open"></i></div>
+            <div class="alerta-kpi-content">
+                <span>Alertas de estoque</span>
+                <strong>{{ total_alertas_estoque }}</strong>
+            </div>
+        </article>
+    </div>
+
+    <div class="alertas-grid">
+        <section class="responsive-card alertas-card alertas-card-warning">
+            <div class="alertas-card-head">
+                <h3><i class="fas fa-calendar-check"></i> Contas vencendo hoje</h3>
+                <a href="{% url 'financeiro:contas_receber' %}?vencimento=hoje" class="alertas-link">Abrir</a>
+            </div>
+            <div class="alertas-list">
+                {% for item in contas_vencendo_hoje %}
+                <article class="alerta-item">
+                    <p>Cliente <strong>{{ item.cliente_nome }}</strong> vence hoje em <strong>{{ item.valor|currency_br }}</strong>.</p>
+                </article>
+                {% empty %}
+                <p class="alerta-empty">Nenhuma conta vencendo hoje.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="responsive-card alertas-card alertas-card-danger">
+            <div class="alertas-card-head">
+                <h3><i class="fas fa-triangle-exclamation"></i> Contas atrasadas</h3>
+                <a href="{% url 'financeiro:contas_receber' %}?status=atrasado" class="alertas-link">Abrir</a>
+            </div>
+            <div class="alertas-list">
+                {% for item in contas_atrasadas %}
+                <article class="alerta-item">
+                    <p>Cliente <strong>{{ item.cliente_nome }}</strong> está com <strong>{{ item.valor|currency_br }}</strong> em atraso há <strong>{{ item.dias_atraso }}</strong> dia(s).</p>
+                </article>
+                {% empty %}
+                <p class="alerta-empty">Nenhuma conta atrasada.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="responsive-card alertas-card alertas-card-info">
+            <div class="alertas-card-head">
+                <h3><i class="fas fa-boxes-stacked"></i> Estoque baixo</h3>
+                <a href="{% url 'estoque:gestao_produtos' %}" class="alertas-link">Abrir</a>
+            </div>
+            <div class="alertas-list">
+                {% for item in estoque_baixo %}
+                <article class="alerta-item">
+                    <p>Produto <strong>{{ item.nome }}</strong> com estoque baixo: <strong>{{ item.estoque_atual }}</strong> unidade(s).</p>
+                </article>
+                {% empty %}
+                <p class="alerta-empty">Sem alertas de estoque baixo.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="responsive-card alertas-card alertas-card-danger-soft">
+            <div class="alertas-card-head">
+                <h3><i class="fas fa-box-open"></i> Produtos sem estoque</h3>
+                <a href="{% url 'estoque:gestao_produtos' %}" class="alertas-link">Abrir</a>
+            </div>
+            <div class="alertas-list">
+                {% for item in produtos_sem_estoque %}
+                <article class="alerta-item">
+                    <p>Produto <strong>{{ item.nome }}</strong> está sem estoque.</p>
+                </article>
+                {% empty %}
+                <p class="alerta-empty">Nenhum produto zerado.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="responsive-card alertas-card alertas-card-neutral">
+            <div class="alertas-card-head">
+                <h3><i class="fas fa-file-invoice-dollar"></i> Contas a pagar vencendo hoje</h3>
+                <a href="{% url 'financeiro:fluxo_caixa' %}" class="alertas-link">Fluxo de Caixa</a>
+            </div>
+            <div class="alertas-list">
+                {% for item in contas_pagar_vencendo_hoje %}
+                <article class="alerta-item">
+                    <p>Despesa <strong>{{ item.descricao }}</strong> vence hoje: <strong>{{ item.valor|currency_br }}</strong>.</p>
+                </article>
+                {% empty %}
+                <p class="alerta-empty">Nenhuma conta a pagar vencendo hoje.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="responsive-card alertas-card alertas-card-neutral">
+            <div class="alertas-card-head">
+                <h3><i class="fas fa-clock-rotate-left"></i> Contas a pagar atrasadas</h3>
+                <a href="{% url 'financeiro:fluxo_caixa' %}" class="alertas-link">Fluxo de Caixa</a>
+            </div>
+            <div class="alertas-list">
+                {% for item in contas_pagar_atrasadas %}
+                <article class="alerta-item">
+                    <p><strong>{{ item.descricao }}</strong> em atraso há <strong>{{ item.dias_atraso }}</strong> dia(s), valor <strong>{{ item.valor|currency_br }}</strong>.</p>
+                </article>
+                {% empty %}
+                <p class="alerta-empty">Nenhuma conta a pagar atrasada.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+
+<div class="modal fade" id="alertasKpiModal" tabindex="-1" aria-labelledby="alertasKpiModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content alertas-kpi-modal-content">
+            <div class="modal-header alertas-kpi-modal-header">
+                <h5 class="modal-title" id="alertasKpiModalTitle">Detalhes do Indicador</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="alertasKpiModalContent" class="alertas-kpi-modal-body-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/base/formatters.js' %}" defer></script>
+<script id="alertas-kpi-data" type="application/json">{{ kpi_details_json|safe }}</script>
+<script src="{% static 'js/modules/financeiro/alertas-notificacoes.js' %}?v=20260324-05" defer></script>
+{% endblock %}

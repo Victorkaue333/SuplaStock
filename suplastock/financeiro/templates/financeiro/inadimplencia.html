@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load financeiro_extras %}
+
+{% block title %}Inadimplência{% endblock %}
+{% block nav_inadimplencia %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/modules/financeiro/inadimplencia.css' %}?v=20260324-06">
+{% endblock %}
+
+{% block content %}
+<div class="responsive-container inadimplencia-page">
+    <div class="responsive-page-header inadimplencia-header">
+        <div>
+            <h1 class="responsive-page-title">
+                <i class="fas fa-user-clock"></i>
+                Inadimplência
+            </h1>
+            <p class="inadimplencia-subtitle">Priorize cobrança por risco, atraso e valor em aberto.</p>
+        </div>
+        <div class="inadimplencia-meta">
+            <span><i class="fas fa-clock"></i> Atualizado em {{ ultima_atualizacao|date:"d/m/Y H:i:s" }}</span>
+            <a href="{% url 'financeiro:contas_receber' %}?status=atrasado" class="inadimplencia-link">
+                Abrir Contas a Receber
+            </a>
+        </div>
+    </div>
+
+    <section class="app-filter-card inadimplencia-filter-card">
+        <form method="GET"
+              class="app-filter-form inadimplencia-filter-form"
+              data-filter-form
+              data-auto-submit="true"
+              data-filter-debounce="380">
+            <div class="app-filter-grid app-filter-grid--compact inadimplencia-filter-grid">
+                <div class="app-filter-field">
+                    <label class="app-filter-label"><i class="fas fa-search"></i> Cliente</label>
+                    <input type="text" name="cliente" class="app-filter-control" placeholder="Nome ou código do cliente" value="{{ cliente_busca }}">
+                </div>
+                {% if cliente_busca %}
+                <div class="app-filter-actions app-filter-actions--auto inadimplencia-filter-actions">
+                    <a href="{% url 'financeiro:inadimplencia' %}" class="btn-action app-filter-btn app-filter-btn-clear" aria-label="Limpar filtros" title="Limpar filtros">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </form>
+    </section>
+
+    <div class="responsive-stats-grid inadimplencia-kpis">
+        <article class="responsive-stat-card inad-kpi" role="button" tabindex="0" data-kpi="total_em_atraso" aria-label="Abrir detalhes de Total em atraso">
+            <div class="inad-kpi-icon inad-red"><i class="fas fa-money-bill-wave"></i></div>
+            <div class="inad-kpi-content">
+                <span class="inad-kpi-label">Total em atraso</span>
+                <strong class="inad-kpi-value">{{ total_em_atraso|currency_br }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card inad-kpi" role="button" tabindex="0" data-kpi="quantidade_clientes" aria-label="Abrir detalhes de Clientes inadimplentes">
+            <div class="inad-kpi-icon inad-orange"><i class="fas fa-users"></i></div>
+            <div class="inad-kpi-content">
+                <span class="inad-kpi-label">Clientes inadimplentes</span>
+                <strong class="inad-kpi-value">{{ quantidade_clientes_inadimplentes }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card inad-kpi" role="button" tabindex="0" data-kpi="media_dias_atraso" aria-label="Abrir detalhes de Média de dias em atraso">
+            <div class="inad-kpi-icon inad-indigo"><i class="fas fa-hourglass-half"></i></div>
+            <div class="inad-kpi-content">
+                <span class="inad-kpi-label">Média de dias em atraso</span>
+                <strong class="inad-kpi-value">{{ media_dias_atraso }}</strong>
+            </div>
+        </article>
+        <article class="responsive-stat-card inad-kpi" role="button" tabindex="0" data-kpi="maior_divida" aria-label="Abrir detalhes de Maior dívida">
+            <div class="inad-kpi-icon inad-purple"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="inad-kpi-content">
+                <span class="inad-kpi-label">Maior dívida</span>
+                <strong class="inad-kpi-value">{{ maior_divida_em_atraso|currency_br }}</strong>
+            </div>
+        </article>
+    </div>
+
+    <div class="inadimplencia-ranking-grid">
+        <section class="responsive-card">
+            <h3 class="inad-section-title">
+                <i class="fas fa-trophy"></i>
+                Top dívida em aberto
+            </h3>
+            <div class="inad-ranking-list">
+                {% for item in ranking_maior_divida %}
+                <article class="inad-ranking-item">
+                    <div>
+                        <strong>{{ item.cliente_nome }}</strong>
+                        <p>{{ item.contas_em_atraso }} conta(s)</p>
+                    </div>
+                    <span>{{ item.valor_em_atraso|currency_br }}</span>
+                </article>
+                {% empty %}
+                <p class="inad-empty">Sem registros.</p>
+                {% endfor %}
+            </div>
+        </section>
+        <section class="responsive-card">
+            <h3 class="inad-section-title">
+                <i class="fas fa-stopwatch"></i>
+                Top atraso
+            </h3>
+            <div class="inad-ranking-list">
+                {% for item in ranking_maior_atraso %}
+                <article class="inad-ranking-item">
+                    <div>
+                        <strong>{{ item.cliente_nome }}</strong>
+                        <p>{{ item.valor_em_atraso|currency_br }}</p>
+                    </div>
+                    <span>{{ item.dias_em_atraso }} dia(s)</span>
+                </article>
+                {% empty %}
+                <p class="inad-empty">Sem registros.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+
+    <section class="responsive-card inadimplencia-table-card">
+        <h3 class="inad-section-title">
+            <i class="fas fa-list"></i>
+            Clientes em atraso
+        </h3>
+        <div class="responsive-table-wrapper">
+            <table class="responsive-table inad-table">
+                <thead>
+                    <tr>
+                        <th class="inad-th-cliente">Cliente</th>
+                        <th class="inad-th-valor">Valor em atraso</th>
+                        <th class="inad-th-dias">Dias em atraso</th>
+                        <th class="inad-th-data">Última compra</th>
+                        <th class="inad-th-data">Último pagamento</th>
+                        <th class="inad-th-risco">Risco</th>
+                        <th class="inad-th-acoes">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in clientes_inadimplentes %}
+                    <tr>
+                        <td data-label="Cliente" class="inad-col-cliente">
+                            <strong>{{ item.cliente_nome }}</strong>
+                            {% if item.cliente_codigo %}
+                            <small>#{{ item.cliente_codigo }}</small>
+                            {% endif %}
+                        </td>
+                        <td data-label="Valor em atraso" class="inad-valor inad-col-valor">{{ item.valor_em_atraso|currency_br }}</td>
+                        <td data-label="Dias em atraso" class="inad-col-dias">{{ item.dias_em_atraso }}</td>
+                        <td data-label="Última compra" class="inad-col-data">{{ item.ultima_compra|date:"d/m/Y"|default:"-" }}</td>
+                        <td data-label="Último pagamento" class="inad-col-data">{{ item.ultimo_pagamento|date:"d/m/Y"|default:"-" }}</td>
+                        <td data-label="Risco" class="inad-col-risco">
+                            <span class="risk-badge risk-{{ item.risco_codigo }}">{{ item.risco_label }}</span>
+                        </td>
+                        <td data-label="Ações" class="inad-col-acoes td-actions">
+                            <div class="inad-actions">
+                                <a href="{% url 'financeiro:contas_receber' %}?cliente={{ item.cliente_nome|urlencode }}" class="btn-action btn-inad-action">
+                                    <i class="fas fa-eye"></i>
+                                    Ver detalhes
+                                </a>
+                                <a href="{% url 'financeiro:contas_receber' %}?status=atrasado&cliente={{ item.cliente_nome|urlencode }}" class="btn-action btn-inad-action btn-secondary-action">
+                                    <i class="fas fa-file-invoice"></i>
+                                    Abrir extrato
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="inad-empty inad-empty-row">Nenhum cliente em atraso para os filtros selecionados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<div class="modal fade" id="inadKpiModal" tabindex="-1" aria-labelledby="inadKpiModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content inad-kpi-modal-content">
+            <div class="modal-header inad-kpi-modal-header">
+                <h5 class="modal-title" id="inadKpiModalTitle">Detalhes do Indicador</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <div id="inadKpiModalContent" class="inad-kpi-modal-body-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/base/formatters.js' %}" defer></script>
+<script id="inadimplencia-kpi-data" type="application/json">{{ kpi_details_json|safe }}</script>
+<script src="{% static 'js/modules/financeiro/inadimplencia.js' %}?v=20260324-05" defer></script>
+{% endblock %}
