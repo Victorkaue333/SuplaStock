@@ -24,6 +24,8 @@ Abaixo estão listados os principais módulos e funcionalidades do sistema, deta
 
 ### 👤 Usuários e Autenticação:
 
+A parte de autenticação é fundamental para garantir a segurança e controle de acesso ao sistema. As funcionalidades incluem:
+
 - 🔐 Login, logout e controle de sessão;
 - 🔑 Recuperação e redefinição de senha por token;
 - 📝 Perfil do usuário com histórico de acessos;
