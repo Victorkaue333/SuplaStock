@@ -249,13 +249,13 @@ pip install -r requirements.txt
 **Windows:**
 
 ```bash
-copy 
+copy
 ```
 
 **Linux/macOS:**
 
 ```bash
-cp 
+cp
 ```
 
 **5. Execute as migrações e cargas iniciais:**
