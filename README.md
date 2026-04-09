@@ -258,7 +258,7 @@ pip install -r requirements.txt
 **Windows:**
 
 ```bash
-copy
+copy .env.example .env
 ```
 
 **Linux/macOS:**
