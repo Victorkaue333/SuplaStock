@@ -12,6 +12,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+    <!-- GSAP -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
     <style>
         @import url('https://api.fontshare.com/v2/css?f[]=general-sans@200,300,400,500,600,700,800&display=swap');
 
@@ -133,17 +136,17 @@
     <section class="pt-24 pb-32 bg-white overflow-hidden">
         <div class="section-container grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <div class="lg:col-span-6 space-y-8">
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F0FDF4] border border-[#DCFCE7] text-[#16A34A] text-[13px] font-bold uppercase tracking-wider">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#F0FDF4] border border-[#DCFCE7] text-[#16A34A] text-[13px] font-bold uppercase tracking-wider hero-badge">
                     <iconify-icon icon="lucide:zap"></iconify-icon>
                     O Software #1 para Suplementos
                 </div>
-                <h1 class="text-6xl font-extrabold text-[#1E293B] leading-[1.05] tracking-tight">
+                <h1 class="text-6xl font-extrabold text-[#1E293B] leading-[1.05] tracking-tight hero-title">
                     O sistema de gestão que <span class="text-[#22C55E]">profissionaliza</span> sua loja em <span class="text-[#22C55E]">segundos</span>.
                 </h1>
-                <p class="text-xl text-slate-500 leading-relaxed max-w-lg font-medium">
+                <p class="text-xl text-slate-500 leading-relaxed max-w-lg font-medium hero-subtitle">
                     Centralize estoque, PDV, fiscal e financeiro em uma plataforma <span class="text-[#1E293B] font-bold underline decoration-[#22C55E] decoration-2 underline-offset-4">robusta</span> desenhada para o mercado de suplementos.
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex flex-col sm:flex-row gap-4 hero-cta-group">
                     <a href="{% url 'usuarios:login_page' %}" id="hero-cta-main" class="bg-[#22C55E] text-white px-10 py-5 rounded-xl font-bold text-lg hover:bg-[#16A34A] transition-all flex items-center justify-center gap-2 btn-shadow">
                         Acessar Plataforma
                     </a>
@@ -151,7 +154,7 @@
                         Ver Funcionalidades
                     </a>
                 </div>
-                <div class="flex items-center gap-8 pt-6">
+                <div class="flex items-center gap-8 pt-6 hero-social-proof">
                     <div class="flex -space-x-3">
                         <img src="https://i.pravatar.cc/100?u=1" class="w-10 h-10 rounded-full border-2 border-white" alt="User">
                         <img src="https://i.pravatar.cc/100?u=2" class="w-10 h-10 rounded-full border-2 border-white" alt="User">
@@ -164,7 +167,7 @@
             </div>
 
             <!-- REALISTIC PRODUCT UI MOCKUP -->
-            <div class="lg:col-span-6 relative">
+            <div class="lg:col-span-6 relative hero-mockup">
                 <div class="bg-slate-900 rounded-2xl p-1 shadow-2xl overflow-hidden realistic-shadow">
                     <div class="bg-[#F8FAFC] rounded-xl overflow-hidden">
                         <div class="bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
@@ -250,7 +253,7 @@
                     </div>
                 </div>
                 <!-- Floating Badge -->
-                <div class="absolute -bottom-6 -right-6 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-4 animate-bounce">
+                <div class="absolute -bottom-6 -right-6 bg-white p-4 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-4 hero-floating-badge">
                     <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-500">
                         <iconify-icon icon="lucide:alert-circle"></iconify-icon>
                     </div>
@@ -267,17 +270,17 @@
     <section class="py-20 bg-slate-50">
         <div class="section-container">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white p-10 rounded-2xl border border-slate-200 text-center space-y-4 shadow-sm">
-                    <h3 class="text-5xl font-black text-[#22C55E]">5x</h3>
+                <div class="bg-white p-10 rounded-2xl border border-slate-200 text-center space-y-4 shadow-sm stat-card">
+                    <h3 class="text-5xl font-black text-[#22C55E] stat-number" data-target="5">5x</h3>
                     <p class="text-slate-600 font-bold uppercase tracking-widest text-sm">Menos tempo de inventário</p>
                     <p class="text-xs text-slate-400 font-medium">Contagem automatizada e auditoria em tempo real.</p>
                 </div>
-                <div class="bg-white p-10 rounded-2xl border border-slate-200 text-center space-y-4 shadow-sm">
-                    <h3 class="text-5xl font-black text-[#22C55E]">99%</h3>
+                <div class="bg-white p-10 rounded-2xl border border-slate-200 text-center space-y-4 shadow-sm stat-card">
+                    <h3 class="text-5xl font-black text-[#22C55E] stat-number" data-target="99">99%</h3>
                     <p class="text-slate-600 font-bold uppercase tracking-widest text-sm">Acurácia de estoque</p>
                     <p class="text-xs text-slate-400 font-medium">Elimine perdas e rupturas de fornecimento.</p>
                 </div>
-                <div class="bg-white p-10 rounded-2xl border border-slate-200 text-center space-y-4 shadow-sm">
+                <div class="bg-white p-10 rounded-2xl border border-slate-200 text-center space-y-4 shadow-sm stat-card">
                     <h3 class="text-5xl font-black text-[#22C55E]">3m</h3>
                     <p class="text-slate-600 font-bold uppercase tracking-widest text-sm">ROI Médio garantido</p>
                     <p class="text-xs text-slate-400 font-medium">Retorno sobre investimento em tempo recorde.</p>
@@ -437,28 +440,28 @@
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
                 <div class="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-slate-800"></div>
-                <div class="relative z-10 text-center space-y-4">
+                <div class="relative z-10 text-center space-y-4 process-step">
                     <div class="w-24 h-24 bg-[#1E293B] border-4 border-[#22C55E] rounded-full mx-auto flex items-center justify-center shadow-lg">
                         <span class="text-2xl font-black text-[#22C55E]">01</span>
                     </div>
                     <h4 class="text-lg font-bold">Configuração Inicial</h4>
                     <p class="text-xs text-slate-400 leading-relaxed">Configuramos seus dados fiscais e tributários para sua região.</p>
                 </div>
-                <div class="relative z-10 text-center space-y-4">
+                <div class="relative z-10 text-center space-y-4 process-step">
                     <div class="w-24 h-24 bg-[#1E293B] border-4 border-[#22C55E] rounded-full mx-auto flex items-center justify-center shadow-lg">
                         <span class="text-2xl font-black text-[#22C55E]">02</span>
                     </div>
                     <h4 class="text-lg font-bold">Importação Ágil</h4>
                     <p class="text-xs text-slate-400 leading-relaxed">Migramos seu estoque e clientes de planilhas ou sistemas antigos.</p>
                 </div>
-                <div class="relative z-10 text-center space-y-4">
+                <div class="relative z-10 text-center space-y-4 process-step">
                     <div class="w-24 h-24 bg-[#1E293B] border-4 border-[#22C55E] rounded-full mx-auto flex items-center justify-center shadow-lg">
                         <span class="text-2xl font-black text-[#22C55E]">03</span>
                     </div>
                     <h4 class="text-lg font-bold">Gestão de Operações</h4>
                     <p class="text-xs text-slate-400 leading-relaxed">Comece a vender e controlar seu estoque com interface ultra-rápida.</p>
                 </div>
-                <div class="relative z-10 text-center space-y-4">
+                <div class="relative z-10 text-center space-y-4 process-step">
                     <div class="w-24 h-24 bg-[#1E293B] border-4 border-[#22C55E] rounded-full mx-auto flex items-center justify-center shadow-lg">
                         <span class="text-2xl font-black text-[#22C55E]">04</span>
                     </div>
@@ -473,7 +476,7 @@
     <section class="py-24 bg-white">
         <div class="section-container">
             <div class="flex flex-col md:flex-row justify-between items-center gap-12 border-b border-slate-100 pb-16">
-                <div class="text-center md:text-left">
+                <div class="text-center md:text-left metric-item">
                     <p class="text-4xl font-black text-[#1E293B]">2M+</p>
                     <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Transações processadas</p>
                 </div>
@@ -503,8 +506,8 @@
     <!-- TESTIMONIALS -->
     <section class="py-32 bg-[#F8FAFC]">
         <div class="section-container">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="bg-white p-8 rounded-2xl border border-slate-200 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 testimonials-grid">
+                <div class="bg-white p-8 rounded-2xl border border-slate-200 space-y-6 testimonial-card">
                     <div class="flex gap-1 text-[#22C55E]">
                         <iconify-icon icon="lucide:star"></iconify-icon><iconify-icon icon="lucide:star"></iconify-icon>
                         <iconify-icon icon="lucide:star"></iconify-icon><iconify-icon icon="lucide:star"></iconify-icon>
@@ -519,7 +522,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-white p-8 rounded-2xl border border-slate-200 space-y-6">
+                <div class="bg-white p-8 rounded-2xl border border-slate-200 space-y-6 testimonial-card">
                     <div class="flex gap-1 text-[#22C55E]">
                         <iconify-icon icon="lucide:star"></iconify-icon><iconify-icon icon="lucide:star"></iconify-icon>
                         <iconify-icon icon="lucide:star"></iconify-icon><iconify-icon icon="lucide:star"></iconify-icon>
@@ -534,7 +537,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="bg-white p-8 rounded-2xl border border-slate-200 space-y-6">
+                <div class="bg-white p-8 rounded-2xl border border-slate-200 space-y-6 testimonial-card">
                     <div class="flex gap-1 text-[#22C55E]">
                         <iconify-icon icon="lucide:star"></iconify-icon><iconify-icon icon="lucide:star"></iconify-icon>
                         <iconify-icon icon="lucide:star"></iconify-icon><iconify-icon icon="lucide:star"></iconify-icon>
@@ -556,7 +559,7 @@
     <!-- FINAL CTA -->
     <section class="py-24">
         <div class="section-container">
-            <div class="bg-[#1E293B] rounded-[3rem] p-16 md:p-24 text-center space-y-10 relative overflow-hidden">
+            <div class="bg-[#1E293B] rounded-[3rem] p-16 md:p-24 text-center space-y-10 relative overflow-hidden final-cta-block">
                 <div class="absolute inset-0 bg-gradient-to-br from-[#22C55E]/10 to-transparent pointer-events-none"></div>
                 <h2 class="text-5xl font-bold text-white tracking-tight relative z-10">Chega de sistemas <span class="text-[#22C55E]">genéricos</span>.</h2>
                 <p class="text-xl text-slate-400 max-w-2xl mx-auto relative z-10 font-medium">
@@ -642,5 +645,6 @@
         </div>
     </footer>
 
+    <script src="{% static 'js/pages/landing.js' %}"></script>
 </body>
 </html>
