@@ -1,65 +1,333 @@
-﻿{% load static %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Resetar Senha - SuplaStock</title>
+    <title>Nova Senha - SuplaStock</title>
     <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}?v=20260323-02">
     <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32.png' %}?v=20260323-02">
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}?v=20260323-02">
     <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}?v=20260323-02">
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
-        crossorigin="anonymous">
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
-        crossorigin="anonymous"
-        referrerpolicy="no-referrer">
-    <link rel="stylesheet" href="{% static 'css/pages/auth/resetar-senha.css' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="{% static 'css/pages/auth/login.css' %}">
+    <style>
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 28px;
+        }
+        .step-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            transition: all 0.3s;
+        }
+        .step-dot.done { background: #22c55e; }
+        .step-dot.active { background: #22c55e; width: 24px; border-radius: 4px; }
+
+        /* Strength meter */
+        .strength-meter {
+            margin-top: 10px;
+        }
+        .strength-bar {
+            height: 4px;
+            border-radius: 2px;
+            background: #e2e8f0;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+        .strength-fill {
+            height: 100%;
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.4s ease, background 0.4s ease;
+        }
+        .strength-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        /* Password match indicator */
+        .match-indicator {
+            font-size: 0.78rem;
+            margin-top: 6px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .match-indicator.visible { opacity: 1; }
+        .match-indicator.ok { color: #16a34a; }
+        .match-indicator.fail { color: #ef4444; }
+
+        /* Requirements list */
+        .req-list {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+        }
+        .req-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            padding: 3px 0;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+        .req-item i { font-size: 0.7rem; }
+        .req-item.ok { color: #16a34a; }
+        .req-item.ok i { color: #22c55e; }
+    </style>
 </head>
 <body>
-    <div class="card-auth">
-        <h2><i class="fas fa-key me-2"></i>Nova Senha</h2>
-        <p class="text-muted mb-4">Defina sua nova senha abaixo.</p>
+    <div class="login-container">
+        <!-- Painel Esquerdo -->
+        <div class="login-left">
+            <div class="icon">
+                <i class="fas fa-leaf"></i>
+            </div>
+            <h1>SuplaStock</h1>
+            <p>Criar Nova Senha</p>
+            <p style="font-size: 0.95rem; margin-top: 20px; opacity: 0.9; line-height: 1.6;">
+                Escolha uma senha forte com pelo menos <strong>8 caracteres</strong>, incluindo letras maiúsculas, minúsculas e números.
+            </p>
 
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <div class="brand-accent" style="margin-top: 32px;">
+                <i class="fas fa-key me-2"></i>Redefinição Segura
+            </div>
+
+            <div style="margin-top: 48px; display: flex; flex-direction: column; gap: 16px; opacity: 0.8; font-size: 0.85rem;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-check-circle" style="color: #22c55e;"></i>
+                    <span>Criptografada com bcrypt</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-check-circle" style="color: #22c55e;"></i>
+                    <span>Token de uso único</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-check-circle" style="color: #22c55e;"></i>
+                    <span>Sessões anteriores encerradas</span>
+                </div>
+            </div>
         </div>
-        {% endfor %}
-        {% endif %}
 
-        <form method="post">
-            {% csrf_token %}
+        <!-- Painel Direito -->
+        <div class="login-right">
+            <div class="step-indicator">
+                <div class="step-dot done"></div>
+                <div class="step-dot active"></div>
+                <div class="step-dot"></div>
+            </div>
+
+            <h2>Nova Senha</h2>
+            <p class="subtitle">Crie uma senha segura para sua conta</p>
+
+            {% if messages %}
             <div class="mb-3">
-                <label for="nova_senha" class="form-label">Nova Senha</label>
-                <input type="password" class="form-control" id="nova_senha" name="nova_senha" required minlength="8" placeholder="Mínimo 8 caracteres">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} py-2 d-flex align-items-center gap-2" role="alert">
+                    {% if message.tags == 'success' %}<i class="fas fa-check-circle"></i>
+                    {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="fas fa-exclamation-circle"></i>
+                    {% else %}<i class="fas fa-info-circle"></i>{% endif %}
+                    {{ message }}
+                </div>
+                {% endfor %}
             </div>
-            <div class="mb-3">
-                <label for="confirmar_senha" class="form-label">Confirmar Nova Senha</label>
-                <input type="password" class="form-control" id="confirmar_senha" name="confirmar_senha" required minlength="8">
+            {% endif %}
+
+            <!-- Requisitos -->
+            <div class="req-list">
+                <div class="req-item" id="req-min"><i class="fas fa-circle"></i> Mínimo de 8 caracteres</div>
+                <div class="req-item" id="req-upper"><i class="fas fa-circle"></i> Letra maiúscula (A-Z)</div>
+                <div class="req-item" id="req-lower"><i class="fas fa-circle"></i> Letra minúscula (a-z)</div>
+                <div class="req-item" id="req-num"><i class="fas fa-circle"></i> Número (0-9)</div>
             </div>
-            <button type="submit" class="btn btn-primary w-100 mb-3">
-                <i class="fas fa-save me-2"></i>Redefinir Senha
-            </button>
-            <div class="text-center">
-                <a href="{% url 'usuarios:login' %}" class="text-decoration-none"><i class="fas fa-arrow-left me-1"></i>Voltar ao Login</a>
+
+            <form method="post" id="reset-form">
+                {% csrf_token %}
+                <input type="hidden" name="token" value="{{ token }}">
+
+                <!-- Nova senha -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        <i class="fas fa-lock me-2" style="color: #22c55e;"></i>Nova Senha
+                    </label>
+                    <div class="input-group password-input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" class="form-control" id="nova_senha" name="nova_senha"
+                               required placeholder="••••••••" autocomplete="new-password">
+                        <button type="button" class="password-toggle-btn" onclick="togglePass('nova_senha', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <!-- Barra de força -->
+                    <div class="strength-meter">
+                        <div class="strength-bar">
+                            <div class="strength-fill" id="strength-fill"></div>
+                        </div>
+                        <span class="strength-text" id="strength-text">Digite sua senha</span>
+                    </div>
+                </div>
+
+                <!-- Confirmar senha -->
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="fas fa-lock-open me-2" style="color: #22c55e;"></i>Confirmar Senha
+                    </label>
+                    <div class="input-group password-input-group">
+                        <span class="input-group-text"><i class="fas fa-lock-open"></i></span>
+                        <input type="password" class="form-control" id="confirmar_senha" name="confirmar_senha"
+                               required placeholder="••••••••" autocomplete="new-password">
+                        <button type="button" class="password-toggle-btn" onclick="togglePass('confirmar_senha', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="match-indicator" id="match-indicator">
+                        <i class="fas fa-circle-check"></i>
+                        <span id="match-text"></span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login" id="submit-btn" disabled>
+                    <i class="fas fa-key me-2"></i>Redefinir Senha
+                </button>
+            </form>
+
+            <div class="login-footer">
+                <a href="{% url 'usuarios:login' %}" class="login-link">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar ao Login
+                </a>
             </div>
-        </form>
+        </div>
     </div>
-    <script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
-        crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+            crossorigin="anonymous"></script>
+    <script>
+        function togglePass(fieldId, btn) {
+            const field = document.getElementById(fieldId);
+            const icon = btn.querySelector('i');
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                field.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        const novaSenha       = document.getElementById('nova_senha');
+        const confirmarSenha  = document.getElementById('confirmar_senha');
+        const submitBtn       = document.getElementById('submit-btn');
+        const matchIndicator  = document.getElementById('match-indicator');
+        const matchText       = document.getElementById('match-text');
+        const strengthFill    = document.getElementById('strength-fill');
+        const strengthText    = document.getElementById('strength-text');
+
+        const reqs = {
+            min:   { el: document.getElementById('req-min'),   check: v => v.length >= 8 },
+            upper: { el: document.getElementById('req-upper'), check: v => /[A-Z]/.test(v) },
+            lower: { el: document.getElementById('req-lower'), check: v => /[a-z]/.test(v) },
+            num:   { el: document.getElementById('req-num'),   check: v => /[0-9]/.test(v) },
+        };
+
+        function calcStrength(v) {
+            let score = 0;
+            if (v.length >= 8)  score++;
+            if (v.length >= 12) score++;
+            if (/[A-Z]/.test(v)) score++;
+            if (/[a-z]/.test(v)) score++;
+            if (/[0-9]/.test(v)) score++;
+            if (/[^A-Za-z0-9]/.test(v)) score++;
+            return score;
+        }
+
+        function updateUI() {
+            const v = novaSenha.value;
+            const c = confirmarSenha.value;
+
+            // Requirements
+            let passedAll = true;
+            for (const [, r] of Object.entries(reqs)) {
+                const ok = r.check(v);
+                if (!ok) passedAll = false;
+                r.el.classList.toggle('ok', ok);
+                const icon = r.el.querySelector('i');
+                icon.className = ok ? 'fas fa-check-circle' : 'fas fa-circle';
+            }
+
+            // Strength
+            const score = calcStrength(v);
+            const pct   = Math.min((score / 6) * 100, 100);
+            strengthFill.style.width = pct + '%';
+
+            if (score <= 2) {
+                strengthFill.style.background = '#ef4444';
+                strengthText.textContent = 'Muito fraca';
+                strengthText.style.color = '#ef4444';
+            } else if (score <= 3) {
+                strengthFill.style.background = '#f97316';
+                strengthText.textContent = 'Fraca';
+                strengthText.style.color = '#f97316';
+            } else if (score <= 4) {
+                strengthFill.style.background = '#eab308';
+                strengthText.textContent = 'Moderada';
+                strengthText.style.color = '#eab308';
+            } else {
+                strengthFill.style.background = '#22c55e';
+                strengthText.textContent = 'Forte';
+                strengthText.style.color = '#22c55e';
+            }
+
+            if (!v) {
+                strengthFill.style.width = '0%';
+                strengthText.textContent = 'Digite sua senha';
+                strengthText.style.color = '#94a3b8';
+            }
+
+            // Match
+            if (c.length > 0) {
+                matchIndicator.classList.add('visible');
+                if (v === c) {
+                    matchIndicator.classList.add('ok');
+                    matchIndicator.classList.remove('fail');
+                    matchText.textContent = 'Senhas coincidem';
+                    matchIndicator.querySelector('i').className = 'fas fa-circle-check';
+                } else {
+                    matchIndicator.classList.add('fail');
+                    matchIndicator.classList.remove('ok');
+                    matchText.textContent = 'Senhas não coincidem';
+                    matchIndicator.querySelector('i').className = 'fas fa-circle-xmark';
+                }
+            } else {
+                matchIndicator.classList.remove('visible');
+            }
+
+            submitBtn.disabled = !(passedAll && v === c && c.length > 0);
+        }
+
+        novaSenha.addEventListener('input', updateUI);
+        confirmarSenha.addEventListener('input', updateUI);
+
+        document.getElementById('reset-form').addEventListener('submit', function() {
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Salvando...';
+            submitBtn.disabled = true;
+        });
+    </script>
 </body>
 </html>
-
-
-

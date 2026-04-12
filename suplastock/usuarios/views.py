@@ -512,7 +512,42 @@ def logout_view(request):
     return HttpResponseRedirect(reverse('usuarios:login'))
 
 
+def solicitar_acesso_view(request):
+    """Exibe formulário de solicitação de acesso para usuários não cadastrados.
+    Não cria contas automaticamente — apenas registra a solicitação para o admin.
+    """
+    if request.user.is_authenticated:
+        return HttpResponseRedirect(reverse('home'))
+
+    if request.method == 'POST':
+        nome_completo = request.POST.get('nome_completo', '').strip()
+        email = request.POST.get('email', '').strip()
+        telefone = request.POST.get('telefone', '').strip()
+        cargo = request.POST.get('cargo', 'vendedor')
+        mensagem_texto = request.POST.get('mensagem', '').strip()
+
+        if not nome_completo or not email:
+            messages.error(request, 'Nome completo e e-mail são obrigatórios.')
+            return render(request, 'usuarios/auth/cadastro.html')
+
+        import logging
+        logger = logging.getLogger('usuarios')
+        logger.info(
+            'SOLICITAÇÃO DE ACESSO | Nome: %s | Email: %s | Telefone: %s | Cargo: %s | Msg: %s',
+            nome_completo, email, telefone or 'N/A', cargo, mensagem_texto or 'N/A'
+        )
+
+        messages.success(
+            request,
+            'Solicitação enviada! O administrador entrará em contato em até 48h.'
+        )
+        return HttpResponseRedirect(reverse('usuarios:login'))
+
+    return render(request, 'usuarios/auth/cadastro.html')
+
+
 def recuperar_senha_view(request):
+
     """Solicita recuperaÃ§Ã£o de senha"""
     if request.method == 'POST':
         email = request.POST.get('email')

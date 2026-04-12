@@ -7,6 +7,7 @@ urlpatterns = [
     path('', views.login_view, name='login'),
     path('login/', views.login_view, name='login_page'),
     path('logout/', views.logout_view, name='logout'),
+    path('auth/solicitar-acesso/', views.solicitar_acesso_view, name='solicitar_acesso'),
     path('auth/recuperar-senha/', views.recuperar_senha_view, name='recuperar_senha'),
     path('auth/resetar-senha/<str:token>/', views.resetar_senha_view, name='resetar_senha'),
     path('auth/alterar-senha/', views.alterar_senha_view, name='alterar_senha'),

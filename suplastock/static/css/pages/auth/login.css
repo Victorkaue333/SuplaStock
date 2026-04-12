@@ -380,3 +380,24 @@ body {
                 margin-bottom: 16px !important;
             }
         }
+
+        /* ── Login footer links ── */
+        .login-footer {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .login-link {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #64748b;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .login-link:hover {
+            color: #22c55e;
+        }
+
