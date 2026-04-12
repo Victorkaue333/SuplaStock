@@ -1,4 +1,4 @@
-﻿from django.shortcuts import render
+from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -1079,5 +1079,5 @@ def perfil_view(request):
 @login_required
 def home_view(request):
     """View da página inicial (Acesso Rápido)"""
-    return render(request, 'landing/index.html')
+    return render(request, 'home.html')
 
