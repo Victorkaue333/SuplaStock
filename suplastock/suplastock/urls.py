@@ -1,1 +1,1 @@
-﻿from vsupla_stockurls import urlpatterns  # noqa: F401
+from supla_stock.urls import urlpatterns  # noqa: F401
