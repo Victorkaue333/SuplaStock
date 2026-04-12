@@ -18,7 +18,7 @@ body {
             bottom: 0;
             background: 
                 radial-gradient(circle at 20% 50%, rgba(34, 197, 94, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(34, 197, 94, 0.12) 0%, transparent 50%);
+                radial-gradient(circle at 80% 80%, rgba(15, 23, 42, 0.15) 0%, transparent 50%);
             pointer-events: none;
         }
         
@@ -37,7 +37,7 @@ body {
         }
         
         .login-left {
-            background: linear-gradient(135deg, #16a34a 0%, #14532d 100%);
+            background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%);
             padding: 60px 40px;
             color: white;
             flex: 1;
@@ -55,7 +55,7 @@ body {
             right: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
             animation: pulse 4s ease-in-out infinite;
         }
         
@@ -233,14 +233,14 @@ body {
             color: white;
             width: 100%;
             transition: all 0.3s;
-            box-shadow: 0 4px 14px rgba(34, 197, 94, 0.25);
+            box-shadow: 0 4px 14px rgba(34, 197, 94, 0.3);
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.35);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
             background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
         }
         
@@ -254,14 +254,14 @@ body {
         }
         
         .forgot-password a {
-            color: #22c55e;
+            color: #B91C1C;
             text-decoration: none;
             font-weight: 600;
             transition: all 0.3s;
         }
         
         .forgot-password a:hover {
-            color: #15803d;
+            color: #7F1D1D;
             text-decoration: underline;
         }
         
